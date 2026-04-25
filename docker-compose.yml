@@ -1,0 +1,121 @@
+version: '3.9'
+
+services:
+
+  # ─── Databases ───────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend Services ─────────────────────────────────────────
+  user-service:
+    build: ./services/user-service
+    container_name: user-service
+    ports:
+      - "4001:4001"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/users?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - PORT=4001
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api-gateway
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      - USER_SERVICE_URL=http://user-service:4001
+      - PORT=4000
+    depends_on:
+      - user-service
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./services/api-gateway:/app
+      - /app/node_modules
+
+  # ─── Frontend Apps ────────────────────────────────────────────
+  rider-app:
+    build: ./apps/rider-app
+    container_name: rider-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./apps/rider-app:/app
+      - /app/node_modules
+      - /app/.next
+
+  driver-app:
+    build: ./apps/driver-app
+    container_name: driver-app
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - PORT=3001
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./apps/driver-app:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  mongo_data:
+
+networks:
+  app-network:
+    driver: bridge
