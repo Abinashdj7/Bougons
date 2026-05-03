@@ -1,29 +1,25 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const axios = require('axios');
-const winston = require('winston');
+const { setupSocket } = require('./socket');
+const { logger } = require('./utils/logger');
 
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 4000;
 
-// ─── Logger ───────────────────────────────────────────────────
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.colorize(),
-    winston.format.simple()
-  ),
-  transports: [new winston.transports.Console()],
-});
-
 // ─── CORS ─────────────────────────────────────────────────────
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+];
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -43,6 +39,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.set('trust proxy', 1);
 
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -50,7 +47,11 @@ app.use(rateLimit({
   message: { success: false, message: 'Too many requests' },
 }));
 
-// ─── Health Check ─────────────────────────────────────────────
+// ─── Socket.io setup ──────────────────────────────────────────
+const io = setupSocket(server);
+app.set('io', io); // available in routes via req.app.get('io')
+
+// ─── Health ───────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -59,33 +60,31 @@ app.get('/health', (req, res) => {
       userService:         process.env.USER_SERVICE_URL,
       rideService:         process.env.RIDE_SERVICE_URL         || 'not configured',
       locationService:     process.env.LOCATION_SERVICE_URL     || 'not configured',
-      paymentService:      process.env.PAYMENT_SERVICE_URL      || 'not configured',
       notificationService: process.env.NOTIFICATION_SERVICE_URL || 'not configured',
     },
   });
 });
 
-// ─── Generic forward function ─────────────────────────────────
+// ─── Forward function ─────────────────────────────────────────
 const forward = (serviceUrl) => async (req, res) => {
   try {
     const url = `${serviceUrl}${req.originalUrl}`;
     logger.info(`→ ${req.method} ${url}`);
 
     const response = await axios({
-      method: req.method,
+      method:  req.method,
       url,
-      data: req.body,
+      data:    req.body,
       headers: {
         'Content-Type': 'application/json',
         ...(req.headers.authorization && { Authorization: req.headers.authorization }),
-        ...(req.headers.cookie && { Cookie: req.headers.cookie }),
-        'X-Forwarded-For': req.ip,
+        ...(req.headers.cookie        && { Cookie: req.headers.cookie }),
+        'X-Forwarded-For':  req.ip,
         'X-Gateway-Request': 'true',
       },
-      validateStatus: () => true, // forward status as-is, don't throw
+      validateStatus: () => true,
     });
 
-    // Forward cookies set by the service back to the browser
     if (response.headers['set-cookie']) {
       res.setHeader('Set-Cookie', response.headers['set-cookie']);
     }
@@ -97,21 +96,19 @@ const forward = (serviceUrl) => async (req, res) => {
   }
 };
 
-// ─── Routes → Services ───────────────────────────────────────
-const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://user-service:4001';
+// ─── Routes → Services ────────────────────────────────────────
+const USER_SERVICE     = process.env.USER_SERVICE_URL     || 'http://bougons-users:4001';
+const RIDE_SERVICE     = process.env.RIDE_SERVICE_URL     || 'http://bougons-ride-service:4002';
+const LOCATION_SERVICE = process.env.LOCATION_SERVICE_URL || 'http://bougons-location:4003';
+const NOTIFICATION_SERVICE = process.env.NOTIFICATION_SERVICE_URL || 'http://bougons-notification:4005';
+const PAYMENT_SERVICE = process.env.PAYMENT_SERVICE_URL || 'http://bougons-payment:4004';
 
-app.all('/api/auth/*',    forward(USER_SERVICE));
-app.all('/api/profile/*', forward(USER_SERVICE));
-
-// Phase 2+ — uncomment as services are added
-// const RIDE_SERVICE         = process.env.RIDE_SERVICE_URL         || 'http://ride-service:4002';
-// const LOCATION_SERVICE     = process.env.LOCATION_SERVICE_URL     || 'http://location-service:4003';
-// const PAYMENT_SERVICE      = process.env.PAYMENT_SERVICE_URL      || 'http://payment-service:4004';
-// const NOTIFICATION_SERVICE = process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:4005';
-// app.all('/api/rides/*',         forward(RIDE_SERVICE));
-// app.all('/api/location/*',      forward(LOCATION_SERVICE));
-// app.all('/api/payments/*',      forward(PAYMENT_SERVICE));
-// app.all('/api/notifications/*', forward(NOTIFICATION_SERVICE));
+app.all('/api/auth/*',     forward(USER_SERVICE));
+app.all('/api/profile/*',  forward(USER_SERVICE));
+app.all('/api/rides/*',    forward(RIDE_SERVICE));
+app.all('/api/location/*', forward(LOCATION_SERVICE));
+app.all('/api/notifications/*', forward(NOTIFICATION_SERVICE));
+app.all('/api/payments/*', forward(PAYMENT_SERVICE));
 
 // ─── 404 ──────────────────────────────────────────────────────
 app.use('*', (req, res) => {
@@ -119,6 +116,6 @@ app.use('*', (req, res) => {
 });
 
 // ─── Start ────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  logger.info(`API Gateway running on port ${PORT}`);
+server.listen(PORT, () => {
+  logger.info(`API Gateway running on port ${PORT} (HTTP + WebSocket)`);
 });

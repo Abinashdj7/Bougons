@@ -1,69 +1,49 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
-export const useGeolocation = (options = {}) => {
-  const [location, setLocation] = useState(null);   // { lat, lng }
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+export const useGeolocation = (watch = false) => {
+  const [location, setLocation] = useState(null);
+  const [error,    setError]    = useState(null);
+  const [loading,  setLoading]  = useState(true);
+  const watchId = useRef(null);
 
   const getLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
+      setError('Geolocation not supported');
+      setLoading(false);
       return;
     }
-
     setLoading(true);
-    setError(null);
-
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        });
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLoading(false);
       },
-      (err) => {
-        setError(err.message);
-        setLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000,
-        ...options,
-      }
+      (err) => { setError(err.message); setLoading(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   }, []);
 
-  // Watch position (continuous updates)
-  const watchPosition = useCallback(() => {
-    if (!navigator.geolocation) return null;
+  // Continuous watch for driver app — sends updates every ~3s
+  useEffect(() => {
+    if (!watch || !navigator.geolocation) return;
 
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        });
+    watchId.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLoading(false);
       },
       (err) => setError(err.message),
-      { enableHighAccuracy: true, ...options }
+      { enableHighAccuracy: true, maximumAge: 3000 }
     );
 
-    return watchId;
-  }, []);
+    return () => {
+      if (watchId.current) navigator.geolocation.clearWatch(watchId.current);
+    };
+  }, [watch]);
 
-  const clearWatch = useCallback((watchId) => {
-    if (watchId) navigator.geolocation.clearWatch(watchId);
-  }, []);
+  useEffect(() => { getLocation(); }, [getLocation]);
 
-  useEffect(() => {
-    getLocation();
-  }, []);
-
-  return { location, error, loading, getLocation, watchPosition, clearWatch };
+  return { location, error, loading, getLocation };
 };
