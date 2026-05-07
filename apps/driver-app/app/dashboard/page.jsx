@@ -20,7 +20,7 @@ export default function DriverDashboard() {
     toggleOnline, setPendingRide, acceptRide, declineRide,
   } = useDriverStore();
   const { emit, on, off } = useSocket();
-  const { location } = useGeolocation(isOnline); // watch position when online
+  const { location } = useGeolocation(isOnline);
   const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
@@ -28,7 +28,6 @@ export default function DriverDashboard() {
     if (user?.role !== 'driver') { router.replace('/auth/login'); return; }
   }, [isAuthenticated, user, router]);
 
-  // ─── Send location updates when online ─────────────────────
   useEffect(() => {
     if (!isOnline || !location) return;
 
@@ -38,18 +37,20 @@ export default function DriverDashboard() {
       speed: 0,
     });
 
-    // Also persist to location service REST API
     import('@/lib/api').then(({ default: api }) => {
       api.put('/api/location/drivers/update', {
         coordinates: [location.lng, location.lat],
-      }).catch(() => {});
+      }).catch(() => { });
     });
   }, [location, isOnline, emit]);
 
-  // ─── Listen for incoming ride requests ──────────────────────
   useEffect(() => {
     const onNewRequest = (data) => {
-      if (!isOnline) return;
+      console.info('[Socket] received ride:new_request', data);
+      if (!isOnline) {
+        console.warn('[Socket] ride:new_request ignored because driver is offline');
+        return;
+      }
       setPendingRide(data);
       toast('🚗 New ride request!', { duration: 15000 });
     };
@@ -58,7 +59,6 @@ export default function DriverDashboard() {
     return () => off('ride:new_request', onNewRequest);
   }, [isOnline, on, off, setPendingRide]);
 
-  // Redirect to active ride page if ride was accepted
   useEffect(() => {
     if (['accepted', 'driver_arriving', 'in_progress'].includes(status)) {
       router.push('/ride/active');
@@ -84,7 +84,7 @@ export default function DriverDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
+      {}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ export default function DriverDashboard() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
-        {/* Online Toggle */}
+        {}
         <div className={`rounded-2xl p-6 transition-all duration-300 ${isOnline ? 'bg-green-500' : 'bg-gray-800'}`}>
           <div className="flex items-center justify-between">
             <div>
@@ -129,13 +129,13 @@ export default function DriverDashboard() {
             >
               {isOnline
                 ? <ToggleRight className="w-10 h-10 text-white" />
-                : <ToggleLeft  className="w-10 h-10 text-white" />
+                : <ToggleLeft className="w-10 h-10 text-white" />
               }
             </button>
           </div>
         </div>
 
-        {/* Incoming Ride Request */}
+        {}
         {pendingRide && (
           <div className="card border-2 border-primary-500 animate-pulse-slow">
             <div className="flex items-center gap-2 mb-4">
@@ -191,7 +191,7 @@ export default function DriverDashboard() {
           </div>
         )}
 
-        {/* Earnings */}
+        {}
         <div className="grid grid-cols-2 gap-4">
           <div className="card">
             <div className="flex items-center gap-3 mb-3">
@@ -213,7 +213,7 @@ export default function DriverDashboard() {
           </div>
         </div>
 
-        {/* Profile */}
+        {}
         <div className="card">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center">

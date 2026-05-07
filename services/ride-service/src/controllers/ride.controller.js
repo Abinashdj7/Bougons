@@ -1,13 +1,16 @@
 const rideService = require('../services/ride.service');
 const Ride = require('../models/ride.model');
 
-// POST /api/rides — request a ride
+
 const requestRide = async (req, res, next) => {
   try {
     const { pickup, destination, paymentMethod } = req.body;
 
     if (!pickup?.location?.coordinates || !destination?.location?.coordinates) {
-      return res.status(400).json({ success: false, message: 'Pickup and destination coordinates required' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request: pickup and destination with coordinates required'
+      });
     }
 
     const { ride, fareData } = await rideService.requestRide({
@@ -23,26 +26,37 @@ const requestRide = async (req, res, next) => {
   }
 };
 
-// GET /api/rides/estimate — fare estimate without creating a ride
+
 const getEstimate = async (req, res, next) => {
   try {
     const { pickupLng, pickupLat, destLng, destLat } = req.query;
 
     if (!pickupLng || !pickupLat || !destLng || !destLat) {
-      return res.status(400).json({ success: false, message: 'Coordinates required' });
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required coordinates: pickupLng, pickupLat, destLng, destLat'
+      });
     }
 
-    const Ride = require('../models/ride.model');
-    const { calculateFare, getSurgeMultiplier } = require('../utils/fareCalculator');
+
+    const coords = [pickupLng, pickupLat, destLng, destLat].map(parseFloat);
+    if (coords.some(isNaN)) {
+      return res.status(400).json({
+        success: false,
+        message: 'All coordinates must be valid numbers'
+      });
+    }
 
     const activeRides = await Ride.countDocuments({
       status: { $in: ['searching', 'accepted', 'in_progress'] },
     });
 
+    const { calculateFare, getSurgeMultiplier } = require('../utils/fareCalculator');
+
     const surgeMultiplier = getSurgeMultiplier(activeRides);
     const fareData = calculateFare(
-      [parseFloat(pickupLng), parseFloat(pickupLat)],
-      [parseFloat(destLng), parseFloat(destLat)],
+      [coords[0], coords[1]],
+      [coords[2], coords[3]],
       surgeMultiplier
     );
 
@@ -52,42 +66,59 @@ const getEstimate = async (req, res, next) => {
   }
 };
 
-// GET /api/rides — ride history for rider or driver
+
 const getRideHistory = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, status } = req.query;
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+
     const query = req.user.role === 'rider'
       ? { rider: req.user.id }
       : { driver: req.user.id };
 
+    if (status) {
+      query.status = status;
+    }
+
     const rides = await Ride.find(query)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum);
 
     const total = await Ride.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      data: { rides, total, page: parseInt(page), pages: Math.ceil(total / limit) },
+      data: {
+        rides,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum)
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// GET /api/rides/:id
+
 const getRide = async (req, res, next) => {
   try {
     const ride = await Ride.findById(req.params.id);
-    if (!ride) return res.status(404).json({ success: false, message: 'Ride not found' });
+    if (!ride) {
+      return res.status(404).json({ success: false, message: 'Ride not found' });
+    }
 
     const isOwner =
       String(ride.rider) === req.user.id ||
-      String(ride.driver) === req.user.id ||
+      (ride.driver && String(ride.driver) === req.user.id) ||
       req.user.role === 'admin';
 
-    if (!isOwner) return res.status(403).json({ success: false, message: 'Access denied' });
+    if (!isOwner) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
 
     res.status(200).json({ success: true, data: { ride } });
   } catch (error) {
@@ -95,47 +126,59 @@ const getRide = async (req, res, next) => {
   }
 };
 
-// PUT /api/rides/:id/accept — driver accepts
+
 const acceptRide = async (req, res, next) => {
   try {
     const ride = await rideService.acceptRide(req.params.id, req.user.id);
     res.status(200).json({ success: true, data: { ride } });
   } catch (error) {
+    if (error.message.includes('not available')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };
 
-// PUT /api/rides/:id/arriving — driver is arriving
+
 const driverArriving = async (req, res, next) => {
   try {
     const ride = await rideService.driverArriving(req.params.id, req.user.id);
     res.status(200).json({ success: true, data: { ride } });
   } catch (error) {
+    if (error.message.includes('invalid status')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };
 
-// PUT /api/rides/:id/start — driver starts ride
+
 const startRide = async (req, res, next) => {
   try {
     const ride = await rideService.startRide(req.params.id, req.user.id);
     res.status(200).json({ success: true, data: { ride } });
   } catch (error) {
+    if (error.message.includes('invalid status')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };
 
-// PUT /api/rides/:id/complete — driver completes ride
+
 const completeRide = async (req, res, next) => {
   try {
     const ride = await rideService.completeRide(req.params.id, req.user.id);
     res.status(200).json({ success: true, data: { ride } });
   } catch (error) {
+    if (error.message.includes('invalid status')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };
 
-// PUT /api/rides/:id/cancel
+
 const cancelRide = async (req, res, next) => {
   try {
     const ride = await rideService.cancelRide(
@@ -146,20 +189,35 @@ const cancelRide = async (req, res, next) => {
     );
     res.status(200).json({ success: true, data: { ride } });
   } catch (error) {
+    if (error.message.includes('cannot be cancelled')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };
 
-// POST /api/rides/:id/rate
+
 const submitRating = async (req, res, next) => {
   try {
     const { score, comment } = req.body;
-    if (!score || score < 1 || score > 5) {
-      return res.status(400).json({ success: false, message: 'Score must be between 1 and 5' });
+
+    if (score === undefined || score === null) {
+      return res.status(400).json({ success: false, message: 'Score is required' });
     }
+
+    if (!Number.isInteger(score) || score < 1 || score > 5) {
+      return res.status(400).json({ success: false, message: 'Score must be an integer between 1 and 5' });
+    }
+
     const ride = await rideService.submitRating(req.params.id, req.user.id, req.user.role, score, comment);
     res.status(200).json({ success: true, data: { ride } });
   } catch (error) {
+    if (error.message.includes('Not authorized')) {
+      return res.status(403).json({ success: false, message: error.message });
+    }
+    if (error.message.includes('not completed')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
     next(error);
   }
 };

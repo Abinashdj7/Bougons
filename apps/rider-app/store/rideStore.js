@@ -6,9 +6,9 @@ export const useRideStore = create((set, get) => ({
   currentRide:  null,
   fareEstimate: null,
   driverLocation: null,
-  status: 'idle', // idle | searching | accepted | driver_arriving | in_progress | completed | cancelled
+  status: 'idle',
 
-  // ─── Get fare estimate ──────────────────────────────────────
+
   getEstimate: async (pickup, destination) => {
     try {
       const { data } = await api.get('/api/rides/estimate', {
@@ -27,7 +27,7 @@ export const useRideStore = create((set, get) => ({
     }
   },
 
-  // ─── Request a ride ─────────────────────────────────────────
+
   requestRide: async (pickup, destination, paymentMethod = 'card') => {
     try {
       const { data } = await api.post('/api/rides', {
@@ -43,7 +43,7 @@ export const useRideStore = create((set, get) => ({
     }
   },
 
-  // ─── Cancel ride ────────────────────────────────────────────
+
   cancelRide: async (reason = 'Cancelled by rider') => {
     const { currentRide } = get();
     if (!currentRide) return;
@@ -56,14 +56,14 @@ export const useRideStore = create((set, get) => ({
     }
   },
 
-  // ─── Socket event handlers ───────────────────────────────────
+
   setDriverFound:    (ride)     => set({ currentRide: { ...get().currentRide, ...ride }, status: 'accepted' }),
   setDriverArriving: ()         => set({ status: 'driver_arriving' }),
   setRideStarted:    ()         => set({ status: 'in_progress' }),
   setRideCompleted:  ()         => set({ status: 'completed' }),
   setDriverLocation: (location) => set({ driverLocation: location }),
 
-  // ─── Rate ride ──────────────────────────────────────────────
+
   rateRide: async (score, comment) => {
     const { currentRide } = get();
     if (!currentRide) return;

@@ -9,7 +9,7 @@ import { useSocket } from '@/hooks/useSocket';
 import { MapPin, Navigation, ArrowLeft, Car, Clock, Euro, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// Simple geocoding using OpenStreetMap Nominatim (free, no API key)
+
 const geocodeAddress = async (address) => {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
@@ -32,19 +32,19 @@ export default function RequestRidePage() {
   const { location } = useGeolocation();
   const { emit } = useSocket();
 
-  const [pickupAddress,      setPickupAddress]      = useState('');
+  const [pickupAddress, setPickupAddress] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
-  const [pickup,             setPickup]             = useState(null);
-  const [destination,        setDestination]        = useState(null);
-  const [loadingEstimate,    setLoadingEstimate]    = useState(false);
-  const [loadingRide,        setLoadingRide]        = useState(false);
-  const [step,               setStep]               = useState('form'); // form | estimate | searching
+  const [pickup, setPickup] = useState(null);
+  const [destination, setDestination] = useState(null);
+  const [loadingEstimate, setLoadingEstimate] = useState(false);
+  const [loadingRide, setLoadingRide] = useState(false);
+  const [step, setStep] = useState('form');
 
   useEffect(() => {
     if (!isAuthenticated) router.replace('/auth/login');
   }, [isAuthenticated, router]);
 
-  // Pre-fill pickup with current location
+
   useEffect(() => {
     if (location && !pickupAddress) {
       setPickupAddress(`${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`);
@@ -87,7 +87,13 @@ export default function RequestRidePage() {
       const ride = await requestRide(pickup, destination);
       if (ride) {
         setStep('searching');
-        // Notify drivers via socket
+
+        console.info('[Socket] rider:request_ride', {
+          rideId: ride._id,
+          pickup: pickup.location.coordinates,
+          destination: destination.location.coordinates,
+          fare: fareEstimate?.estimated,
+        });
         emit('rider:request_ride', {
           rideId: ride._id,
           pickup: pickup.location.coordinates,
@@ -103,7 +109,7 @@ export default function RequestRidePage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
+      {}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
           <button onClick={() => router.back()} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
@@ -115,7 +121,7 @@ export default function RequestRidePage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
 
-        {/* Searching state */}
+        {}
         {step === 'searching' && (
           <div className="card text-center py-12">
             <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -226,9 +232,9 @@ export default function RequestRidePage() {
                 {/* Fare breakdown */}
                 <div className="border-t border-gray-100 pt-3 space-y-1.5">
                   {[
-                    ['Base fare',    `€${fareEstimate.breakdown?.baseFare}`],
-                    ['Distance',     `€${fareEstimate.breakdown?.distanceFare}`],
-                    ['Time',         `€${fareEstimate.breakdown?.timeFare}`],
+                    ['Base fare', `€${fareEstimate.breakdown?.baseFare}`],
+                    ['Distance', `€${fareEstimate.breakdown?.distanceFare}`],
+                    ['Time', `€${fareEstimate.breakdown?.timeFare}`],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between text-sm">
                       <span className="text-gray-500">{label}</span>

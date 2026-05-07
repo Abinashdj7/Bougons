@@ -15,7 +15,7 @@ export default function RegisterPage() {
     email: '',
     password: '',
     phone: '',
-    role: 'rider',
+    role: 'driver',
   });
 
   const handleChange = (e) => {
@@ -34,30 +34,28 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
-        {/* Logo */}
+        {}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-2xl mb-4">
             <Car className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">RideX</h1>
-          <p className="text-gray-500 mt-1">Create your account</p>
+          <p className="text-gray-500 mt-1">Create your driver account</p>
         </div>
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
-
-            {/* Role selector */}
+            {}
             <div className="grid grid-cols-2 gap-3 mb-2">
               {['rider', 'driver'].map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setForm({ ...form, role: r })}
-                  className={`py-2.5 px-4 rounded-xl border-2 font-medium text-sm capitalize transition-all ${
-                    form.role === r
-                      ? 'border-primary-500 bg-primary-50 text-primary-600'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                  }`}
+                  className={`py-2.5 px-4 rounded-xl border-2 font-medium text-sm capitalize transition-all ${form.role === r
+                    ? 'border-primary-500 bg-primary-50 text-primary-600'
+                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}
                 >
                   {r === 'rider' ? '🚗 Rider' : '🚕 Driver'}
                 </button>
@@ -137,7 +135,6 @@ export default function RegisterPage() {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : 'Create Account'}
             </button>
-
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">

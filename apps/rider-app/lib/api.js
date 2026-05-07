@@ -2,13 +2,12 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
-  withCredentials: true, // sends cookies (refresh token)
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// ─── Request interceptor: attach access token ──────────────────
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -22,7 +21,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ─── Response interceptor: refresh token on 401 ───────────────
 let isRefreshing = false;
 let failedQueue = [];
 

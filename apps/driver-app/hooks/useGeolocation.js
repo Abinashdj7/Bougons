@@ -25,7 +25,6 @@ export const useGeolocation = (watch = false) => {
     );
   }, []);
 
-  // Continuous watch for driver app — sends updates every ~3s
   useEffect(() => {
     if (!watch || !navigator.geolocation) return;
 

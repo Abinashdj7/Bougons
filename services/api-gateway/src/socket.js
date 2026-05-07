@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { logger } = require('./utils/logger');
 
 const LOCATION_SERVICE_URL = process.env.LOCATION_SERVICE_URL || 'http://bougons-location:4003';
-const RIDE_SERVICE_URL     = process.env.RIDE_SERVICE_URL     || 'http://bougons-ride-service:4002';
+const RIDE_SERVICE_URL = process.env.RIDE_SERVICE_URL || 'http://bougons-ride-service:4002';
 
 const setupSocket = (server) => {
   const io = new Server(server, {
@@ -16,12 +16,12 @@ const setupSocket = (server) => {
       ],
       credentials: true,
     },
-    // Longer ping timeout for mobile connections
+
     pingTimeout: 60000,
     pingInterval: 25000,
   });
 
-  // ─── Auth middleware ────────────────────────────────────────
+
   io.use((socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
@@ -38,14 +38,15 @@ const setupSocket = (server) => {
     const { id, role } = socket.user;
     logger.info(`[Socket] ${role} connected: ${id}`);
 
-    // ─── Room setup ──────────────────────────────────────────
-    socket.join(`user:${id}`);                  // personal room
-    if (role === 'driver') socket.join('drivers'); // driver pool
 
-    // ─── Rider events ────────────────────────────────────────
+    socket.join(`user:${id}`);
+    if (role === 'driver') socket.join('drivers');
+
+
     socket.on('rider:request_ride', (data) => {
       logger.info(`[Socket] Ride request from rider ${id}`);
-      // Broadcast to all online drivers — location-service handles matching
+      const driverCount = io.sockets.adapter.rooms.get('drivers')?.size || 0;
+      logger.info(`[Socket] Broadcasting ride request to ${driverCount} drivers`);
       io.to('drivers').emit('ride:new_request', { ...data, riderId: id });
     });
 
@@ -58,11 +59,11 @@ const setupSocket = (server) => {
       socket.leave(`tracking:${driverId}`);
     });
 
-    // ─── Driver events ────────────────────────────────────────
+
     socket.on('driver:location_update', ({ coordinates, heading, speed }) => {
       if (role !== 'driver') return;
 
-      // Forward location to anyone tracking this driver
+
       socket.to(`tracking:${id}`).emit('driver:location', {
         driverId: id,
         coordinates,
@@ -76,7 +77,7 @@ const setupSocket = (server) => {
       if (role !== 'driver') return;
       logger.info(`[Socket] Driver ${id} accepted ride ${rideId}`);
 
-      // Notify the specific rider
+
       io.to(`user:${riderId}`).emit('ride:driver_found', {
         rideId,
         driverId: id,
@@ -99,7 +100,7 @@ const setupSocket = (server) => {
       socket.leave(`tracking:${id}`);
     });
 
-    // ─── Chat ─────────────────────────────────────────────────
+
     socket.on('chat:send', ({ rideId, recipientId, message }) => {
       io.to(`user:${recipientId}`).emit('chat:message', {
         rideId,
@@ -110,7 +111,7 @@ const setupSocket = (server) => {
       });
     });
 
-    // ─── Cancel ───────────────────────────────────────────────
+
     socket.on('ride:cancel', ({ rideId, recipientId, reason }) => {
       io.to(`user:${recipientId}`).emit('ride:cancelled', {
         rideId,
@@ -124,7 +125,7 @@ const setupSocket = (server) => {
     });
   });
 
-  // Expose io so REST routes can emit events if needed
+
   return io;
 };
 

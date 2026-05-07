@@ -12,7 +12,7 @@ const authenticate = (req, res, next) => {
   }
 };
 
-// Internal service calls (no JWT — use shared secret)
+
 const authenticateInternal = (req, res, next) => {
   const secret = req.headers['x-internal-secret'];
   if (secret !== process.env.INTERNAL_SECRET) {

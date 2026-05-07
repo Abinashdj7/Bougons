@@ -10,7 +10,6 @@ const authenticate = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
 
-    // Check blacklist
     const blacklisted = await isTokenBlacklisted(token);
     if (blacklisted) {
       return res.status(401).json({ success: false, message: 'Token revoked' });

@@ -11,12 +11,18 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
 
-      // ─── Register ──────────────────────────────────────────
       register: async (formData) => {
         set({ isLoading: true });
         try {
           const { data } = await api.post('/api/auth/register', formData);
           const { user, accessToken } = data.data;
+
+          if (user.role !== 'driver') {
+            localStorage.removeItem('accessToken');
+            set({ user: null, accessToken: null, isAuthenticated: false });
+            toast.error('Please register using a driver account');
+            return { success: false, message: 'Please register using a driver account' };
+          }
 
           localStorage.setItem('accessToken', accessToken);
           set({ user, accessToken, isAuthenticated: true });
@@ -32,12 +38,18 @@ export const useAuthStore = create(
         }
       },
 
-      // ─── Login ─────────────────────────────────────────────
       login: async (credentials) => {
         set({ isLoading: true });
         try {
           const { data } = await api.post('/api/auth/login', credentials);
           const { user, accessToken } = data.data;
+
+          if (user.role !== 'driver') {
+            localStorage.removeItem('accessToken');
+            set({ user: null, accessToken: null, isAuthenticated: false });
+            toast.error('Please sign in with a driver account');
+            return { success: false, message: 'Please sign in with a driver account' };
+          }
 
           localStorage.setItem('accessToken', accessToken);
           set({ user, accessToken, isAuthenticated: true });
@@ -53,17 +65,15 @@ export const useAuthStore = create(
         }
       },
 
-      // ─── Logout ────────────────────────────────────────────
       logout: async () => {
         try {
           await api.post('/api/auth/logout');
-        } catch (_) {}
+        } catch (_) { }
         localStorage.removeItem('accessToken');
         set({ user: null, accessToken: null, isAuthenticated: false });
         toast.success('Logged out');
       },
 
-      // ─── Update user in store ──────────────────────────────
       setUser: (user) => set({ user }),
     }),
     {

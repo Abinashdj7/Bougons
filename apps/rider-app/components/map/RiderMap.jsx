@@ -3,12 +3,10 @@
 import { useEffect, useRef } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
-// Phase 2 will use react-leaflet fully. This component is the shell.
 export default function RiderMap({ onLocationSelect, markers = [] }) {
   const mapRef = useRef(null);
   const { location, loading, error } = useGeolocation();
 
-  // Leaflet is loaded dynamically to avoid SSR issues
   useEffect(() => {
     if (typeof window === 'undefined' || !location) return;
 
@@ -19,7 +17,6 @@ export default function RiderMap({ onLocationSelect, markers = [] }) {
       L = (await import('leaflet')).default;
       await import('leaflet/dist/leaflet.css');
 
-      // Fix default marker icons in Next.js
       delete L.Icon.Default.prototype._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -34,13 +31,11 @@ export default function RiderMap({ onLocationSelect, markers = [] }) {
           attribution: '© OpenStreetMap contributors',
         }).addTo(map);
 
-        // User location marker
         L.marker([location.lat, location.lng])
           .addTo(map)
           .bindPopup('Your location')
           .openPopup();
 
-        // Click to select pickup/destination
         if (onLocationSelect) {
           map.on('click', (e) => {
             onLocationSelect({ lat: e.latlng.lat, lng: e.latlng.lng });

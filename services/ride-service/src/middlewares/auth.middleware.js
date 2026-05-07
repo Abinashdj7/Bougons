@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-// Ride service validates JWT directly (same secret as user-service)
+
 const authenticate = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;

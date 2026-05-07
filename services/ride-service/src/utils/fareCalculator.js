@@ -1,9 +1,9 @@
-const BASE_FARE      = 2.50;  // €
-const RATE_PER_KM    = 1.20;  // € per km
-const RATE_PER_MIN   = 0.25;  // € per minute
-const MINIMUM_FARE   = 5.00;  // €
+const BASE_FARE      = 2.50;
+const RATE_PER_KM    = 1.20;
+const RATE_PER_MIN   = 0.25;
+const MINIMUM_FARE   = 5.00;
 
-// Haversine formula — distance between two [lng, lat] points in km
+
 const haversineDistance = (coord1, coord2) => {
   const toRad = (deg) => (deg * Math.PI) / 180;
   const R = 6371;
@@ -20,7 +20,7 @@ const haversineDistance = (coord1, coord2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-// Estimate duration in minutes based on distance (avg 30km/h in city)
+
 const estimateDuration = (distanceKm) => Math.ceil((distanceKm / 30) * 60);
 
 const calculateFare = (pickupCoords, destinationCoords, surgeMultiplier = 1.0) => {
@@ -32,9 +32,9 @@ const calculateFare = (pickupCoords, destinationCoords, surgeMultiplier = 1.0) =
   const final = Math.max(MINIMUM_FARE, withSurge);
 
   return {
-    distance: Math.round(distance * 100) / 100,   // km, 2 decimals
-    duration,                                       // minutes
-    estimated: Math.round(final * 100) / 100,       // €
+    distance: Math.round(distance * 100) / 100,
+    duration,
+    estimated: Math.round(final * 100) / 100,
     surgeMultiplier,
     breakdown: {
       baseFare: BASE_FARE,
@@ -44,7 +44,7 @@ const calculateFare = (pickupCoords, destinationCoords, surgeMultiplier = 1.0) =
   };
 };
 
-// Surge pricing — increases multiplier based on active ride count in an area
+
 const getSurgeMultiplier = (activeRidesCount) => {
   if (activeRidesCount > 50) return 2.0;
   if (activeRidesCount > 30) return 1.5;

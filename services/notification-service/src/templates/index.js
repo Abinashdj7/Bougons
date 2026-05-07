@@ -20,7 +20,7 @@ const templates = {
   ride_started: () => ({
     title: '▶️ Ride started',
     body:  'Your ride is now in progress. Sit back and relax!',
-    email: null, // no email for this one
+    email: null,
   }),
 
   ride_completed: ({ fare }) => ({

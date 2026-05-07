@@ -1,6 +1,6 @@
 const locationService = require('../services/location.service');
 
-// PUT /api/location/drivers/update — driver sends GPS position
+
 const updateLocation = async (req, res, next) => {
   try {
     const { coordinates, heading, speed } = req.body;
@@ -24,7 +24,7 @@ const updateLocation = async (req, res, next) => {
   }
 };
 
-// GET /api/location/drivers/nearby — find drivers near a point
+
 const getNearbyDrivers = async (req, res, next) => {
   try {
     const { lng, lat, maxDistance, limit } = req.query;
@@ -46,7 +46,7 @@ const getNearbyDrivers = async (req, res, next) => {
   }
 };
 
-// GET /api/location/drivers/:id — get one driver's location
+
 const getDriverLocation = async (req, res, next) => {
   try {
     const location = await locationService.getDriverLocation(req.params.id);
@@ -59,7 +59,7 @@ const getDriverLocation = async (req, res, next) => {
   }
 };
 
-// PUT /api/location/drivers/status — toggle online/offline
+
 const setOnlineStatus = async (req, res, next) => {
   try {
     const { isOnline } = req.body;
@@ -77,7 +77,7 @@ const setOnlineStatus = async (req, res, next) => {
   }
 };
 
-// GET /api/location/drivers — all online drivers (admin)
+
 const getOnlineDrivers = async (req, res, next) => {
   try {
     const drivers = await locationService.getOnlineDrivers();

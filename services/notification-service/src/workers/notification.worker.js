@@ -13,13 +13,13 @@ const processNotification = async (job) => {
 
   logger.info(`Processing notification: ${type} for ${recipientId}`);
 
-  // Get user preferences
+
   const prefs = await Preference.findOne({ userId: recipientId });
 
-  // Build content from template
+
   const template = getTemplate(type, data);
 
-  // Save to DB first
+
   const notification = await Notification.create({
     recipient: recipientId,
     type,
@@ -31,7 +31,7 @@ const processNotification = async (job) => {
 
   const results = { inapp: false, email: false, push: false };
 
-  // ─── In-app via SSE ──────────────────────────────────────────
+
   if (!channels || channels.includes('inapp')) {
     if (!prefs || prefs.channels.inapp) {
       results.inapp = sendToUser(recipientId, notification);
@@ -41,7 +41,7 @@ const processNotification = async (job) => {
     }
   }
 
-  // ─── Email ───────────────────────────────────────────────────
+
   if (channels?.includes('email') && template.email) {
     if (!prefs || prefs.channels.email) {
       const to = emailAddress || prefs?.email;
@@ -52,7 +52,7 @@ const processNotification = async (job) => {
     }
   }
 
-  // ─── Push ────────────────────────────────────────────────────
+
   if (channels?.includes('push')) {
     if (prefs?.channels.push && prefs?.pushSubscription) {
       results.push = await sendPush(prefs.pushSubscription, {

@@ -5,7 +5,7 @@ let transporter;
 
 const getTransporter = () => {
   if (!transporter) {
-    // Use Ethereal (fake SMTP) in dev — replace with SendGrid in production
+
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.ethereal.email',
       port: parseInt(process.env.SMTP_PORT || '587'),

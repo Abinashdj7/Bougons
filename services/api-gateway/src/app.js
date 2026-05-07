@@ -14,7 +14,6 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 4000;
 
-// ─── CORS ─────────────────────────────────────────────────────
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
@@ -34,7 +33,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
-// ─── Middlewares ──────────────────────────────────────────────
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
@@ -47,39 +45,36 @@ app.use(rateLimit({
   message: { success: false, message: 'Too many requests' },
 }));
 
-// ─── Socket.io setup ──────────────────────────────────────────
 const io = setupSocket(server);
-app.set('io', io); // available in routes via req.app.get('io')
+app.set('io', io);
 
-// ─── Health ───────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
     service: 'api-gateway',
     services: {
-      userService:         process.env.USER_SERVICE_URL,
-      rideService:         process.env.RIDE_SERVICE_URL         || 'not configured',
-      locationService:     process.env.LOCATION_SERVICE_URL     || 'not configured',
+      userService: process.env.USER_SERVICE_URL,
+      rideService: process.env.RIDE_SERVICE_URL || 'not configured',
+      locationService: process.env.LOCATION_SERVICE_URL || 'not configured',
       notificationService: process.env.NOTIFICATION_SERVICE_URL || 'not configured',
     },
   });
 });
 
-// ─── Forward function ─────────────────────────────────────────
 const forward = (serviceUrl) => async (req, res) => {
   try {
     const url = `${serviceUrl}${req.originalUrl}`;
     logger.info(`→ ${req.method} ${url}`);
 
     const response = await axios({
-      method:  req.method,
+      method: req.method,
       url,
-      data:    req.body,
+      data: req.body,
       headers: {
         'Content-Type': 'application/json',
         ...(req.headers.authorization && { Authorization: req.headers.authorization }),
-        ...(req.headers.cookie        && { Cookie: req.headers.cookie }),
-        'X-Forwarded-For':  req.ip,
+        ...(req.headers.cookie && { Cookie: req.headers.cookie }),
+        'X-Forwarded-For': req.ip,
         'X-Gateway-Request': 'true',
       },
       validateStatus: () => true,
@@ -96,26 +91,29 @@ const forward = (serviceUrl) => async (req, res) => {
   }
 };
 
-// ─── Routes → Services ────────────────────────────────────────
-const USER_SERVICE     = process.env.USER_SERVICE_URL     || 'http://bougons-users:4001';
-const RIDE_SERVICE     = process.env.RIDE_SERVICE_URL     || 'http://bougons-ride-service:4002';
-const LOCATION_SERVICE = process.env.LOCATION_SERVICE_URL || 'http://bougons-location:4003';
-const NOTIFICATION_SERVICE = process.env.NOTIFICATION_SERVICE_URL || 'http://bougons-notification:4005';
-const PAYMENT_SERVICE = process.env.PAYMENT_SERVICE_URL || 'http://bougons-payment:4004';
+const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://user-service:4001';
+const RIDE_SERVICE = process.env.RIDE_SERVICE_URL || 'http://ride-service:4002';
+const LOCATION_SERVICE = process.env.LOCATION_SERVICE_URL || 'http://location-service:4003';
+const NOTIFICATION_SERVICE = process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:4005';
+const PAYMENT_SERVICE = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:4004';
 
-app.all('/api/auth/*',     forward(USER_SERVICE));
-app.all('/api/profile/*',  forward(USER_SERVICE));
-app.all('/api/rides/*',    forward(RIDE_SERVICE));
+app.all('/api/auth', forward(USER_SERVICE));
+app.all('/api/auth/*', forward(USER_SERVICE));
+app.all('/api/profile', forward(USER_SERVICE));
+app.all('/api/profile/*', forward(USER_SERVICE));
+app.all('/api/rides', forward(RIDE_SERVICE));
+app.all('/api/rides/*', forward(RIDE_SERVICE));
+app.all('/api/location', forward(LOCATION_SERVICE));
 app.all('/api/location/*', forward(LOCATION_SERVICE));
+app.all('/api/notifications', forward(NOTIFICATION_SERVICE));
 app.all('/api/notifications/*', forward(NOTIFICATION_SERVICE));
+app.all('/api/payments', forward(PAYMENT_SERVICE));
 app.all('/api/payments/*', forward(PAYMENT_SERVICE));
 
-// ─── 404 ──────────────────────────────────────────────────────
 app.use('*', (req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
-// ─── Start ────────────────────────────────────────────────────
 server.listen(PORT, () => {
   logger.info(`API Gateway running on port ${PORT} (HTTP + WebSocket)`);
 });

@@ -67,9 +67,17 @@ services:
       - .env
     environment:
       - USER_SERVICE_URL=http://user-service:4001
+      - RIDE_SERVICE_URL=http://ride-service:4002
+      - LOCATION_SERVICE_URL=http://location-service:4003
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4005
+      - PAYMENT_SERVICE_URL=http://payment-service:4004
       - PORT=4000
     depends_on:
       - user-service
+      - ride-service
+      - location-service
+      - notification-service
+      - payment-service
     networks:
       - app-network
     restart: unless-stopped
@@ -104,6 +112,7 @@ services:
       - .env
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
       - PORT=3001
     networks:
       - app-network
@@ -112,7 +121,123 @@ services:
       - ./apps/driver-app:/app
       - /app/node_modules
       - /app/.next
+  ride-service:
+    build: ./services/ride-service
+    container_name: bougons-ride-service
+    ports:
+      - "4002:4002"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/rides?authSource=admin
+      - PORT=4002
+      - JWT_SECRET=${JWT_SECRET}
+      - LOCATION_SERVICE_URL=http://location-service:4003
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4005
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./services/ride-service:/app
+      - /app/node_modules
 
+  location-service:
+    build: ./services/location-service
+    container_name: bougons-location
+    ports:
+      - "4003:4003"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/locations?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - PORT=4003
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./services/location-service:/app
+      - /app/node_modules
+  notification-service:
+    build: ./services/notification-service
+    container_name: bougons-notification
+    ports:
+      - "4005:4005"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/notifications?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - PORT=4005
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_SECRET=${INTERNAL_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./services/notification-service:/app
+      - /app/node_modules
+  payment-service:
+    build: ./services/payment-service
+    container_name: bougons-payment
+    ports:
+      - "4004:4004"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/payments?authSource=admin
+      - PORT=4004
+      - JWT_SECRET=${JWT_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4005
+      - INTERNAL_SECRET=${INTERNAL_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./services/payment-service:/app
+      - /app/node_modules
+
+  admin-app:
+    build: ./apps/admin-app
+    container_name: bougons-admin
+    ports:
+      - "3002:3002"
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./apps/admin-app:/app
+      - /app/node_modules
+      - /app/.next
 volumes:
   mongo_data:
 

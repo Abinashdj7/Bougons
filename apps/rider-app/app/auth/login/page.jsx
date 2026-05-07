@@ -29,7 +29,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
-        {/* Logo */}
+        {}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-2xl mb-4">
             <Car className="w-8 h-8 text-white" />
@@ -38,7 +38,7 @@ export default function LoginPage() {
           <p className="text-gray-500 mt-1">Sign in to your rider account</p>
         </div>
 
-        {/* Form */}
+        {}
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-5">
 

@@ -33,7 +33,7 @@ const driverSchema = new Schema(
         default: 'Point',
       },
       coordinates: {
-        type: [Number], // [longitude, latitude]
+        type: [Number],
         default: [0, 0],
       },
     },
@@ -47,7 +47,6 @@ const driverSchema = new Schema(
   }
 );
 
-// ─── Geospatial Index ─────────────────────────────────────────
 driverSchema.index({ currentLocation: '2dsphere' });
 
 module.exports = mongoose.model('Driver', driverSchema);

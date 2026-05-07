@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
-// Persisted snapshot of driver location — used for $geoNear queries
-// Real-time updates go through Redis for speed, MongoDB for persistence
+
 const driverLocationSchema = new Schema(
   {
     driverId: {
@@ -22,12 +21,12 @@ const driverLocationSchema = new Schema(
         default: 'Point',
       },
       coordinates: {
-        type: [Number], // [longitude, latitude]
+        type: [Number],
         required: true,
       },
     },
-    heading:  { type: Number, default: 0 },   // degrees 0-360
-    speed:    { type: Number, default: 0 },   // km/h
+    heading:  { type: Number, default: 0 },
+    speed:    { type: Number, default: 0 },
     updatedAt: { type: Date, default: Date.now },
   },
   { timestamps: false }

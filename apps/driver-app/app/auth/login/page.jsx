@@ -29,19 +29,17 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
-        {/* Logo */}
+        {}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-2xl mb-4">
             <Car className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">RideX</h1>
-          <p className="text-gray-500 mt-1">Sign in to your rider account</p>
+          <p className="text-gray-500 mt-1">Sign in to your driver account</p>
         </div>
 
-        {/* Form */}
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-5">
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <div className="relative">
@@ -90,7 +88,6 @@ export default function LoginPage() {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : 'Sign In'}
             </button>
-
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
@@ -102,9 +99,9 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Are you a driver?{' '}
-          <a href="http://localhost:3001" className="text-primary-500 hover:underline">
-            Go to Driver App →
+          Are you a rider?{' '}
+          <a href="http://localhost:3000" className="text-primary-500 hover:underline">
+            Go to Rider App →
           </a>
         </p>
       </div>

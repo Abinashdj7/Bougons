@@ -7,7 +7,7 @@ const {
   streamNotifications, internalSend,
 } = require('../controllers/notification.controller');
 
-// Public (authenticated user)
+
 router.get('/',                authenticate, getNotifications);
 router.put('/read-all',        authenticate, markAllAsRead);
 router.put('/:id/read',        authenticate, markAsRead);
@@ -17,7 +17,7 @@ router.put('/preferences',     authenticate, updatePreferences);
 router.post('/subscribe',      authenticate, savePushSubscription);
 router.get('/stream',          authenticate, streamNotifications);
 
-// Internal (service-to-service)
+
 router.post('/internal/send',  authenticateInternal, internalSend);
 
 module.exports = router;

@@ -12,16 +12,24 @@ export const useSocket = () => {
 
   const emit = useCallback((event, data) => {
     const s = getSocket();
-    if (s?.connected) s.emit(event, data);
+    if (!s) return;
+    if (!s.connected) {
+      console.debug('[Socket] emit queued while disconnected', event, data);
+    }
+    console.debug('[Socket] emit', event, data);
+    s.emit(event, data);
   }, []);
 
   const on = useCallback((event, handler) => {
     const s = getSocket();
-    s?.on(event, handler);
+    if (!s) return () => { };
+    console.debug('[Socket] on', event);
+    s.on(event, handler);
     return () => s?.off(event, handler);
   }, []);
 
   const off = useCallback((event, handler) => {
+    console.debug('[Socket] off', event);
     getSocket()?.off(event, handler);
   }, []);
 

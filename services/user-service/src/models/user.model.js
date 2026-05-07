@@ -24,7 +24,7 @@ const userSchema = new Schema(
       type: String,
       required: [true, 'Password is required'],
       minlength: 8,
-      select: false, // never returned by default
+      select: false,
     },
     phone: {
       type: String,
@@ -66,7 +66,6 @@ const userSchema = new Schema(
   }
 );
 
-// ─── Hash password before save ────────────────────────────────
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(12);
@@ -74,12 +73,10 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// ─── Compare password method ──────────────────────────────────
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// ─── Remove sensitive fields from JSON output ─────────────────
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;

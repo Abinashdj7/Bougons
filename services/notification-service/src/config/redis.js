@@ -1,13 +1,13 @@
 const { logger } = require('../utils/logger');
 
-// BullMQ requires ioredis
+
 const Redis = require('ioredis');
 
 let client;
 
 const connectRedis = async () => {
   client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-    maxRetriesPerRequest: null, // required by BullMQ
+    maxRetriesPerRequest: null,
   });
   client.on('connect', () => logger.info('Redis connected (ioredis)'));
   client.on('error',   (err) => logger.error(`Redis error: ${err.message}`));

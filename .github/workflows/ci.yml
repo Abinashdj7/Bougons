@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Test ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ride-service
+          - user-service
+          - location-service
+          - payment-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/${{ matrix.service }}/package.json
+
+      - name: Install dependencies
+        working-directory: services/${{ matrix.service }}
+        run: npm install
+
+      - name: Run tests
+        working-directory: services/${{ matrix.service }}
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-test-secret
+          JWT_REFRESH_SECRET: ci-test-refresh-secret
+          JWT_EXPIRES_IN: 15m
+          JWT_REFRESH_EXPIRES_IN: 7d
+          STRIPE_SECRET_KEY: sk_test_ci_fake_key
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: services/${{ matrix.service }}/coverage
+          retention-days: 7
+
+  frontend-checks:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - rider-app
+          - driver-app
+          - admin-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/${{ matrix.app }}/package.json
+
+      - name: Install dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: npm install
+
+      - name: Lint
+        working-directory: apps/${{ matrix.app }}
+        run: npm run lint
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
+          NEXT_PUBLIC_MAPBOX_TOKEN: pk.test_ci_token
+
+      - name: Build
+        working-directory: apps/${{ matrix.app }}
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
+          NEXT_PUBLIC_MAPBOX_TOKEN: pk.test_ci_token

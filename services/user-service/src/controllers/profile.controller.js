@@ -1,7 +1,6 @@
 const User = require('../models/user.model');
 const Driver = require('../models/driver.model');
 
-// ─── Get Profile ──────────────────────────────────────────────
 const getProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -20,7 +19,6 @@ const getProfile = async (req, res, next) => {
   }
 };
 
-// ─── Update Profile ───────────────────────────────────────────
 const updateProfile = async (req, res, next) => {
   try {
     const allowedFields = ['name', 'phone', 'avatar'];
@@ -44,7 +42,6 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-// ─── Update Driver Profile ────────────────────────────────────
 const updateDriverProfile = async (req, res, next) => {
   try {
     if (req.user.role !== 'driver') {
@@ -67,7 +64,6 @@ const updateDriverProfile = async (req, res, next) => {
   }
 };
 
-// ─── Toggle Driver Online Status ──────────────────────────────
 const toggleDriverStatus = async (req, res, next) => {
   try {
     if (req.user.role !== 'driver') {
@@ -88,7 +84,6 @@ const toggleDriverStatus = async (req, res, next) => {
   }
 };
 
-// ─── Get Driver by ID (public) ────────────────────────────────
 const getDriverById = async (req, res, next) => {
   try {
     const driver = await Driver.findById(req.params.id).populate('userId', 'name rating avatar');

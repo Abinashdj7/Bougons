@@ -10,7 +10,6 @@ const {
 const { getRedis } = require('../config/redis');
 const { logger } = require('../utils/logger');
 
-// ─── Register ─────────────────────────────────────────────────
 const register = async (req, res, next) => {
   try {
     const { name, email, password, phone, role } = req.body;
@@ -22,7 +21,6 @@ const register = async (req, res, next) => {
 
     const user = await User.create({ name, email, password, phone, role });
 
-    // If registering as driver, create driver profile
     if (role === 'driver') {
       await Driver.create({ userId: user._id });
     }
@@ -38,7 +36,7 @@ const register = async (req, res, next) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     logger.info(`New user registered: ${email} (${role})`);
@@ -53,7 +51,6 @@ const register = async (req, res, next) => {
   }
 };
 
-// ─── Login ────────────────────────────────────────────────────
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -86,7 +83,6 @@ const login = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Remove password from response
     user.password = undefined;
 
     logger.info(`User logged in: ${email}`);
@@ -101,7 +97,6 @@ const login = async (req, res, next) => {
   }
 };
 
-// ─── Refresh Token ────────────────────────────────────────────
 const refresh = async (req, res, next) => {
   try {
     const token = req.cookies?.refreshToken;
@@ -111,7 +106,6 @@ const refresh = async (req, res, next) => {
 
     const decoded = verifyRefreshToken(token);
 
-    // Verify token matches what's stored in Redis
     const redis = getRedis();
     const storedToken = await redis.get(`refresh:${decoded.id}`);
     if (storedToken !== token) {
@@ -149,13 +143,11 @@ const refresh = async (req, res, next) => {
   }
 };
 
-// ─── Logout ───────────────────────────────────────────────────
 const logout = async (req, res, next) => {
   try {
-    // Blacklist current access token
-    await blacklistToken(req.token, 15 * 60); // 15 min TTL
 
-    // Delete refresh token from Redis
+    await blacklistToken(req.token, 15 * 60);
+
     await deleteRefreshToken(req.user._id.toString());
 
     res.clearCookie('refreshToken');
@@ -166,7 +158,6 @@ const logout = async (req, res, next) => {
   }
 };
 
-// ─── Get Current User ─────────────────────────────────────────
 const getMe = async (req, res) => {
   return res.status(200).json({ success: true, data: { user: req.user } });
 };

@@ -5,11 +5,11 @@ import toast from 'react-hot-toast';
 export const useDriverStore = create((set, get) => ({
   isOnline:    false,
   activeRide:  null,
-  pendingRide: null,  // incoming request waiting for accept/decline
+  pendingRide: null,
   earnings:    { today: 0, total: 0 },
-  status: 'idle', // idle | pending_request | accepted | driver_arriving | in_progress
+  status: 'idle',
 
-  // ─── Toggle online/offline ──────────────────────────────────
+
   toggleOnline: async (emit) => {
     const { isOnline } = get();
     try {
@@ -17,7 +17,7 @@ export const useDriverStore = create((set, get) => ({
       const nowOnline = data.data.isOnline;
       set({ isOnline: nowOnline });
 
-      // Sync with location service via socket
+
       emit(nowOnline ? 'driver:online' : 'driver:offline', {});
       toast.success(nowOnline ? '🟢 You are online' : '🔴 You are offline');
     } catch {
@@ -25,12 +25,12 @@ export const useDriverStore = create((set, get) => ({
     }
   },
 
-  // ─── Incoming ride request ──────────────────────────────────
+
   setPendingRide: (rideData) => {
     set({ pendingRide: rideData, status: 'pending_request' });
   },
 
-  // ─── Accept ride ────────────────────────────────────────────
+
   acceptRide: async (emit) => {
     const { pendingRide } = get();
     if (!pendingRide) return;
@@ -38,7 +38,7 @@ export const useDriverStore = create((set, get) => ({
       const { data } = await api.put(`/api/rides/${pendingRide.rideId}/accept`);
       set({ activeRide: data.data.ride, pendingRide: null, status: 'accepted' });
 
-      // Notify rider via socket
+
       emit('driver:accept_ride', {
         rideId:  pendingRide.rideId,
         riderId: pendingRide.riderId,
@@ -52,13 +52,13 @@ export const useDriverStore = create((set, get) => ({
     }
   },
 
-  // ─── Decline ride ───────────────────────────────────────────
+
   declineRide: () => {
     set({ pendingRide: null, status: 'idle' });
     toast('Ride declined');
   },
 
-  // ─── Mark arriving ──────────────────────────────────────────
+
   markArriving: async (emit) => {
     const { activeRide } = get();
     if (!activeRide) return;
@@ -74,7 +74,7 @@ export const useDriverStore = create((set, get) => ({
     }
   },
 
-  // ─── Start ride ─────────────────────────────────────────────
+
   startRide: async (emit) => {
     const { activeRide } = get();
     if (!activeRide) return;
@@ -90,7 +90,7 @@ export const useDriverStore = create((set, get) => ({
     }
   },
 
-  // ─── Complete ride ──────────────────────────────────────────
+
   completeRide: async (emit) => {
     const { activeRide } = get();
     if (!activeRide) return;
@@ -103,7 +103,7 @@ export const useDriverStore = create((set, get) => ({
         riderId: activeRide.rider,
       });
 
-      // Update earnings
+
       set((state) => ({
         activeRide: null,
         status: 'idle',
@@ -119,7 +119,7 @@ export const useDriverStore = create((set, get) => ({
     }
   },
 
-  // ─── Cancel ride ────────────────────────────────────────────
+
   cancelRide: async (emit, reason) => {
     const { activeRide } = get();
     if (!activeRide) return;

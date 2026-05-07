@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export const useGeolocation = (options = {}) => {
-  const [location, setLocation] = useState(null);   // { lat, lng }
+  const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +38,6 @@ export const useGeolocation = (options = {}) => {
     );
   }, []);
 
-  // Watch position (continuous updates)
   const watchPosition = useCallback(() => {
     if (!navigator.geolocation) return null;
 

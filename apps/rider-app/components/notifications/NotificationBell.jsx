@@ -22,7 +22,7 @@ export default function NotificationBell() {
 
   return (
     <div className="relative">
-      {/* Bell button */}
+      {}
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors"
@@ -35,14 +35,14 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown */}
+      {}
       {open && (
         <>
-          {/* Backdrop */}
+          {}
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
 
           <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-20 overflow-hidden">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Notifications</h3>
               <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export default function NotificationBell() {
               </div>
             </div>
 
-            {/* List */}
+            {}
             <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
               {loading ? (
                 <div className="flex items-center justify-center py-8">

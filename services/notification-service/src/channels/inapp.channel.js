@@ -1,6 +1,6 @@
 const { logger } = require('../utils/logger');
 
-// SSE clients map: userId → res object
+
 const sseClients = new Map();
 
 const addClient = (userId, res) => {

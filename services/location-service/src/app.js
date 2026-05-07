@@ -24,7 +24,7 @@ app.use(cors({ origin: '*', credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
 
-// ─── Socket.io ────────────────────────────────────────────────
+
 const io = new Server(server, {
   cors: {
     origin: [
@@ -36,7 +36,7 @@ const io = new Server(server, {
   },
 });
 
-// Auth middleware for Socket.io
+
 io.use((socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
@@ -53,41 +53,41 @@ io.on('connection', (socket) => {
   const { id, role } = socket.user;
   logger.info(`Socket connected: ${role} ${id}`);
 
-  // Driver joins their own room so riders can target them
+
   if (role === 'driver') {
     socket.join(`driver:${id}`);
   }
 
-  // Rider joins their own room so driver can send updates
+
   if (role === 'rider') {
     socket.join(`rider:${id}`);
   }
 
-  // ─── Driver sends location update ──────────────────────────
+
   socket.on('driver:location_update', async ({ coordinates, heading, speed }) => {
     if (role !== 'driver') return;
 
     await locationService.updateDriverLocation(id, { coordinates, heading, speed });
 
-    // Broadcast to any rider currently tracking this driver
+
     socket.to(`tracking:${id}`).emit('driver:location', { driverId: id, coordinates, heading });
   });
 
-  // ─── Rider subscribes to track a specific driver ───────────
+
   socket.on('rider:track_driver', ({ driverId }) => {
     if (role !== 'rider') return;
     socket.join(`tracking:${driverId}`);
     logger.info(`Rider ${id} tracking driver ${driverId}`);
   });
 
-  // ─── Driver goes online ────────────────────────────────────
+
   socket.on('driver:online', async () => {
     if (role !== 'driver') return;
     await locationService.setDriverOnlineStatus(id, true);
     socket.emit('driver:status', { isOnline: true });
   });
 
-  // ─── Driver goes offline ───────────────────────────────────
+
   socket.on('driver:offline', async () => {
     if (role !== 'driver') return;
     await locationService.setDriverOnlineStatus(id, false);
@@ -96,14 +96,14 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     logger.info(`Socket disconnected: ${role} ${id}`);
-    // Don't auto-offline on disconnect — driver might have connection blip
+
   });
 });
 
-// Expose io for use in other modules
+
 app.set('io', io);
 
-// ─── REST routes ──────────────────────────────────────────────
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'location-service' });
 });
@@ -112,7 +112,7 @@ app.use('/api/location', locationRoutes);
 app.use('*', (req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorMiddleware);
 
-// ─── Start ────────────────────────────────────────────────────
+
 const start = async () => {
   try {
     await connectDB();

@@ -26,7 +26,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/notifications', notificationRoutes);
-app.use('/internal',          notificationRoutes); // internal routes share same router
+app.use('/internal',          notificationRoutes);
 
 app.use('*', (req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorMiddleware);

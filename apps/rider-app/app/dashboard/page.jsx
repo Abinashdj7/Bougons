@@ -19,7 +19,6 @@ export default function DashboardPage() {
     if (!isAuthenticated) router.replace('/auth/login');
   }, [isAuthenticated, router]);
 
-  // ─── Listen for real-time ride events ──────────────────────
   useEffect(() => {
     const onDriverFound = (data) => {
       setDriverFound(data);
@@ -40,7 +39,6 @@ export default function DashboardPage() {
     };
   }, [on, off, router]);
 
-  // Redirect to tracking if there's an active ride
   useEffect(() => {
     if (['accepted', 'driver_arriving', 'in_progress'].includes(status)) {
       router.push('/ride/tracking');
@@ -57,7 +55,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
+      {}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -80,7 +78,7 @@ export default function DashboardPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
-        {/* Welcome */}
+        {}
         <div className="bg-gradient-to-r from-primary-500 to-orange-400 rounded-2xl p-6 text-white">
           <p className="text-orange-100 text-sm font-medium">Welcome back 👋</p>
           <h2 className="text-2xl font-bold mt-1">{user.name}</h2>
@@ -90,7 +88,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -124,7 +122,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Profile Card */}
+        {}
         <div className="card">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">

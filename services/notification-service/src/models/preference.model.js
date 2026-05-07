@@ -20,7 +20,7 @@ const preferenceSchema = new Schema(
       promotions:   { type: Boolean, default: false },
       messages:     { type: Boolean, default: true  },
     },
-    // Web Push subscription object from browser
+
     pushSubscription: { type: Schema.Types.Mixed, default: null },
     email: { type: String, default: null },
   },

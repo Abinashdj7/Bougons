@@ -8,7 +8,6 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // ─── Fetch notifications from API ──────────────────────────
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
@@ -22,7 +21,6 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // ─── SSE stream for real-time in-app notifications ─────────
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
@@ -37,13 +35,12 @@ export const useNotifications = () => {
     };
 
     eventSource.onerror = () => {
-      // SSE will auto-reconnect; this is normal
+
     };
 
     return () => eventSource.close();
   }, []);
 
-  // ─── Mark as read ───────────────────────────────────────────
   const markAsRead = useCallback(async (id) => {
     try {
       await api.put(`/api/notifications/${id}/read`);
@@ -56,7 +53,6 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // ─── Mark all as read ───────────────────────────────────────
   const markAllAsRead = useCallback(async () => {
     try {
       await api.put('/api/notifications/read-all');

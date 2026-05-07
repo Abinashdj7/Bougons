@@ -15,12 +15,12 @@ const rideSchema = new Schema(
     status: {
       type: String,
       enum: [
-        'searching',      // looking for a driver
-        'accepted',       // driver accepted
-        'driver_arriving',// driver on the way
-        'in_progress',    // ride started
-        'completed',      // ride finished
-        'cancelled',      // cancelled by rider or driver
+        'searching',
+        'accepted',
+        'driver_arriving',
+        'in_progress',
+        'completed',
+        'cancelled',
       ],
       default: 'searching',
     },
@@ -28,7 +28,7 @@ const rideSchema = new Schema(
       address: { type: String, required: true },
       location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], required: true }, // [lng, lat]
+        coordinates: { type: [Number], required: true },
       },
     },
     destination: {
@@ -49,8 +49,8 @@ const rideSchema = new Schema(
         timeFare:      Number,
       },
     },
-    distance: { type: Number },  // km
-    duration: { type: Number },  // estimated minutes
+    distance: { type: Number },
+    duration: { type: Number },
     payment: {
       method: { type: String, enum: ['card', 'cash'], default: 'card' },
       status: { type: String, enum: ['pending', 'paid', 'refunded'], default: 'pending' },

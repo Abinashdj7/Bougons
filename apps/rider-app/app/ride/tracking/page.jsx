@@ -38,11 +38,11 @@ export default function TrackingPage() {
     if (!currentRide)     { router.replace('/dashboard'); return; }
   }, [isAuthenticated, currentRide, router]);
 
-  // ─── Socket listeners ───────────────────────────────────────
+
   useEffect(() => {
     if (!currentRide) return;
 
-    // Start tracking the driver
+
     emit('rider:track_driver', { driverId: currentRide.driver });
 
     const onLocation = ({ coordinates, heading }) => {
@@ -83,7 +83,7 @@ export default function TrackingPage() {
     };
   }, [currentRide, on, off, emit]);
 
-  // ─── Init Leaflet map ────────────────────────────────────────
+
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
@@ -100,14 +100,14 @@ export default function TrackingPage() {
 
       const defaultCoords = driverLocation?.coordinates
         ? [driverLocation.coordinates[1], driverLocation.coordinates[0]]
-        : [48.8566, 2.3522]; // Paris fallback
+        : [48.8566, 2.3522];
 
       mapInstance.current = L.map(mapRef.current).setView(defaultCoords, 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
       }).addTo(mapInstance.current);
 
-      // Destination marker
+
       if (currentRide?.destination?.location?.coordinates) {
         const [lng, lat] = currentRide.destination.location.coordinates;
         L.marker([lat, lng]).addTo(mapInstance.current).bindPopup('Destination');
@@ -117,7 +117,7 @@ export default function TrackingPage() {
     initMap();
   }, []);
 
-  // ─── Update driver marker on map ─────────────────────────────
+
   const updateDriverMarker = async (coordinates) => {
     if (!mapInstance.current) return;
     const L = (await import('leaflet')).default;
@@ -166,13 +166,13 @@ export default function TrackingPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      {/* Map */}
+      {}
       <div ref={mapRef} className="flex-1 min-h-[50vh] z-0" />
 
-      {/* Bottom sheet */}
+      {}
       <div className="bg-white rounded-t-3xl shadow-2xl p-6 space-y-4 z-10">
 
-        {/* Status */}
+        {}
         {currentStep && (
           <div className={`flex items-center gap-3 ${currentStep.bg} rounded-2xl p-4`}>
             <div className={`w-10 h-10 ${currentStep.bg} rounded-xl flex items-center justify-center`}>
@@ -190,7 +190,7 @@ export default function TrackingPage() {
           </div>
         )}
 
-        {/* Rating modal */}
+        {}
         {showRating && (
           <div className="card text-center space-y-4">
             <p className="font-semibold text-gray-900">Rate your ride</p>
@@ -205,7 +205,7 @@ export default function TrackingPage() {
           </div>
         )}
 
-        {/* Ride info */}
+        {}
         {!showRating && (
           <>
             <div className="flex items-center justify-between text-sm">
@@ -216,7 +216,7 @@ export default function TrackingPage() {
               <span className="font-semibold text-primary-500">€{currentRide.fare?.estimated}</span>
             </div>
 
-            {/* Actions */}
+            {}
             <div className="flex gap-3">
               <button
                 onClick={() => setChatOpen(!chatOpen)}
@@ -234,7 +234,7 @@ export default function TrackingPage() {
               )}
             </div>
 
-            {/* Chat */}
+            {}
             {chatOpen && (
               <div className="border border-gray-100 rounded-2xl overflow-hidden">
                 <div className="bg-gray-50 p-3 h-28 overflow-y-auto space-y-2">

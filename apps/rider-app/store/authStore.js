@@ -11,7 +11,6 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
 
-      // ─── Register ──────────────────────────────────────────
       register: async (formData) => {
         set({ isLoading: true });
         try {
@@ -32,7 +31,6 @@ export const useAuthStore = create(
         }
       },
 
-      // ─── Login ─────────────────────────────────────────────
       login: async (credentials) => {
         set({ isLoading: true });
         try {
@@ -53,7 +51,6 @@ export const useAuthStore = create(
         }
       },
 
-      // ─── Logout ────────────────────────────────────────────
       logout: async () => {
         try {
           await api.post('/api/auth/logout');
@@ -63,7 +60,6 @@ export const useAuthStore = create(
         toast.success('Logged out');
       },
 
-      // ─── Update user in store ──────────────────────────────
       setUser: (user) => set({ user }),
     }),
     {

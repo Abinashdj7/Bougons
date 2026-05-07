@@ -41,7 +41,7 @@ export default function ActiveRidePage() {
   const { isAuthenticated } = useAuthStore();
   const { activeRide, status, markArriving, startRide, completeRide, cancelRide } = useDriverStore();
   const { emit, on, off } = useSocket();
-  const { location } = useGeolocation(true); // continuous watch
+  const { location } = useGeolocation(true);
 
   const [chatOpen,    setChatOpen]    = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -55,7 +55,7 @@ export default function ActiveRidePage() {
     if (!activeRide)      { router.replace('/dashboard'); return; }
   }, [isAuthenticated, activeRide, router]);
 
-  // ─── Send location updates continuously ─────────────────────
+
   useEffect(() => {
     if (!location || !activeRide) return;
 
@@ -68,7 +68,7 @@ export default function ActiveRidePage() {
     updateMyMarker([location.lng, location.lat]);
   }, [location, emit, activeRide]);
 
-  // ─── Chat listener ───────────────────────────────────────────
+
   useEffect(() => {
     const onMessage = ({ message, senderRole }) => {
       setMessages(prev => [...prev, { text: message, from: senderRole, time: Date.now() }]);
@@ -78,7 +78,7 @@ export default function ActiveRidePage() {
     return () => off('chat:message', onMessage);
   }, [on, off, chatOpen]);
 
-  // ─── Init map ────────────────────────────────────────────────
+
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
@@ -102,7 +102,7 @@ export default function ActiveRidePage() {
         attribution: '© OpenStreetMap contributors',
       }).addTo(mapInstance.current);
 
-      // Pickup marker
+
       if (activeRide?.pickup?.location?.coordinates) {
         const [lng, lat] = activeRide.pickup.location.coordinates;
         L.marker([lat, lng])
@@ -110,7 +110,7 @@ export default function ActiveRidePage() {
           .bindPopup(`📍 Pickup: ${activeRide.pickup.address}`);
       }
 
-      // Destination marker
+
       if (activeRide?.destination?.location?.coordinates) {
         const [lng, lat] = activeRide.destination.location.coordinates;
         L.marker([lat, lng])
@@ -173,13 +173,13 @@ export default function ActiveRidePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      {/* Map */}
+      {}
       <div ref={mapRef} className="flex-1 min-h-[50vh] z-0" />
 
-      {/* Bottom sheet */}
+      {}
       <div className="bg-white rounded-t-3xl shadow-2xl p-6 space-y-4 z-10">
 
-        {/* Status bar */}
+        {}
         {config && (
           <div className="bg-blue-50 rounded-2xl p-4">
             <p className="font-bold text-blue-900">{config.label}</p>
@@ -187,7 +187,7 @@ export default function ActiveRidePage() {
           </div>
         )}
 
-        {/* Ride details */}
+        {}
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-primary-500 rounded-full flex-shrink-0" />
@@ -209,7 +209,7 @@ export default function ActiveRidePage() {
           </div>
         </div>
 
-        {/* Main action */}
+        {}
         {config && (
           <button
             onClick={handleAction}
@@ -220,7 +220,7 @@ export default function ActiveRidePage() {
           </button>
         )}
 
-        {/* Secondary actions */}
+        {}
         <div className="flex gap-3">
           <button
             onClick={() => setChatOpen(!chatOpen)}
@@ -238,7 +238,7 @@ export default function ActiveRidePage() {
           )}
         </div>
 
-        {/* Chat */}
+        {}
         {chatOpen && (
           <div className="border border-gray-100 rounded-2xl overflow-hidden">
             <div className="bg-gray-50 p-3 h-28 overflow-y-auto space-y-2">

@@ -21,13 +21,11 @@ const verifyRefreshToken = (token) => {
   return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 };
 
-// Store refresh token in Redis with 7 day TTL
 const saveRefreshToken = async (userId, refreshToken) => {
   const redis = getRedis();
   await redis.setEx(`refresh:${userId}`, 7 * 24 * 60 * 60, refreshToken);
 };
 
-// Blacklist access token on logout
 const blacklistToken = async (token, expiresIn) => {
   const redis = getRedis();
   await redis.setEx(`blacklist:${token}`, expiresIn, 'true');
