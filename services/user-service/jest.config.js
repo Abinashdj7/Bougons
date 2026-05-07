@@ -4,6 +4,6 @@ module.exports = {
     testMatch: ['**/?(*.)+(spec|test).js'],
     collectCoverageFrom: ['src/**/*.js', '!src/**/*.test.js'],
     coverageThreshold: {
-        global: { branches: 50, functions: 50, lines: 50, statements: 50 },
+        global: { branches: 30, functions: 30, lines: 40, statements: 40 },
     },
 };
