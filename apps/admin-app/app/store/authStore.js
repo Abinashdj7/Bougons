@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '@/lib/api';
-import { setToken, clearToken } from '@/lib/tokenStore';
 import toast from 'react-hot-toast';
 
 export const useAuthStore = create(
@@ -20,7 +19,7 @@ export const useAuthStore = create(
             toast.error('Admin access only');
             return { success: false };
           }
-          setToken(accessToken);
+          localStorage.setItem('accessToken', accessToken);
           set({ user, isAuthenticated: true });
           toast.success(`Welcome, ${user.name}`);
           return { success: true };
@@ -34,7 +33,7 @@ export const useAuthStore = create(
 
       logout: async () => {
         try { await api.post('/api/auth/logout'); } catch {}
-        clearToken();
+        localStorage.removeItem('accessToken');
         set({ user: null, isAuthenticated: false });
       },
     }),

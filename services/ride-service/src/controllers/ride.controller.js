@@ -77,11 +77,7 @@ const getRideHistory = async (req, res, next) => {
       ? { rider: req.user.id }
       : { driver: req.user.id };
 
-    const ALLOWED_STATUSES = ['searching', 'accepted', 'driver_arriving', 'in_progress', 'completed', 'cancelled'];
     if (status) {
-      if (!ALLOWED_STATUSES.includes(status)) {
-        return res.status(400).json({ success: false, message: 'Invalid status value' });
-      }
       query.status = status;
     }
 

@@ -102,13 +102,11 @@ const setupSocket = (server) => {
 
 
     socket.on('chat:send', ({ rideId, recipientId, message }) => {
-      if (typeof message !== 'string' || message.length === 0 || message.length > 500) return;
-      const safeMessage = message.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
       io.to(`user:${recipientId}`).emit('chat:message', {
         rideId,
         senderId: id,
         senderRole: role,
-        message: safeMessage,
+        message,
         timestamp: Date.now(),
       });
     });

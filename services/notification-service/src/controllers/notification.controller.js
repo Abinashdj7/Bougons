@@ -70,23 +70,11 @@ const getPreferences = async (req, res, next) => {
 };
 
 
-const ALLOWED_PREF_FIELDS = [
-  'channels.inapp', 'channels.email', 'channels.push',
-  'types.ride_updates', 'types.payments', 'types.promotions', 'types.messages',
-  'email',
-];
-
 const updatePreferences = async (req, res, next) => {
   try {
-    const updates = {};
-    for (const field of ALLOWED_PREF_FIELDS) {
-      const [top, sub] = field.split('.');
-      const val = sub ? req.body[top]?.[sub] : req.body[top];
-      if (val !== undefined) updates[field] = val;
-    }
     const prefs = await Preference.findOneAndUpdate(
       { userId: req.user.id },
-      { $set: updates },
+      { $set: req.body },
       { new: true, upsert: true }
     );
     res.status(200).json({ success: true, data: { preferences: prefs } });
@@ -114,6 +102,7 @@ const streamNotifications = (req, res) => {
   res.setHeader('Content-Type',  'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection',    'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
 
 

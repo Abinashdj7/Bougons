@@ -7,7 +7,7 @@ const { validate, registerSchema, loginSchema } = require('../utils/validation')
 
 router.post('/register', authLimiter, validate(registerSchema), register);
 router.post('/login',    authLimiter, validate(loginSchema), login);
-router.post('/refresh',  authLimiter, refresh);
+router.post('/refresh',  refresh);
 router.post('/logout',   authenticate, logout);
 router.get('/me',        authenticate, getMe);
 
