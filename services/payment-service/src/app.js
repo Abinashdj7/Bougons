@@ -14,8 +14,13 @@ const PORT = process.env.PORT || 4004;
 
 app.set('trust proxy', 1);
 app.use(helmet());
-app.use(cors({ origin: '*', credentials: true }));
-app.use(morgan('dev'));
+app.use(cors({
+  origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
