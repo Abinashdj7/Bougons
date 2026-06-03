@@ -5,11 +5,14 @@ import toast from 'react-hot-toast';
 
 export const useAuthStore = create(
     persist(
-        (set, get) => ({
+        (set) => ({
             user: null,
             accessToken: null,
             isAuthenticated: false,
             isLoading: false,
+            _hasHydrated: false,
+
+            setHasHydrated: () => set({ _hasHydrated: true }),
 
             register: async (formData) => {
                 set({ isLoading: true });
@@ -94,12 +97,15 @@ export const useAuthStore = create(
             },
         }),
         {
-            name: 'auth-store',
+            name: 'admin-auth',
             partialize: (state) => ({
                 user: state.user,
                 accessToken: state.accessToken,
                 isAuthenticated: state.isAuthenticated,
             }),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated();
+            },
         }
     )
 );

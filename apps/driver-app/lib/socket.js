@@ -4,13 +4,8 @@ let socket = null;
 
 export const getSocket = () => {
   if (!socket) {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      console.warn('[Socket] No access token found for socket auth');
-    }
-
     socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000', {
-      auth: { token },
+      auth: (cb) => cb({ token: localStorage.getItem('accessToken') }),
       transports: ['websocket'],
       autoConnect: true,
       reconnection: true,

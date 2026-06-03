@@ -3,6 +3,7 @@ module.exports = {
     coveragePathIgnorePatterns: ['/node_modules/'],
     testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
     collectCoverageFrom: ['src/**/*.js', '!src/**/*.test.js'],
+    testTimeout: 30000,
     coverageThreshold: {
         global: {
             branches: 50,

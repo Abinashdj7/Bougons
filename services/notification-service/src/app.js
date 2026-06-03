@@ -9,6 +9,7 @@ const { init: initPush } = require('./channels/push.channel');
 const { startWorker }  = require('./workers/notification.worker');
 const errorMiddleware  = require('./middlewares/error.middleware');
 const notificationRoutes = require('./routes/notification.routes');
+const internalRoutes     = require('./routes/internal.routes');
 
 require('dotenv').config();
 
@@ -26,7 +27,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/notifications', notificationRoutes);
-app.use('/internal',          notificationRoutes);
+app.use('/internal',         internalRoutes);
 
 app.use('*', (req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorMiddleware);

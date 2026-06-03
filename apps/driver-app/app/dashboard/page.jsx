@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 
 export default function DriverDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout, _hasHydrated } = useAuthStore();
   const {
     isOnline, pendingRide, earnings, status,
     toggleOnline, setPendingRide, acceptRide, declineRide,
@@ -24,9 +24,11 @@ export default function DriverDashboard() {
   const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!isAuthenticated) { router.replace('/auth/login'); return; }
     if (user?.role !== 'driver') { router.replace('/auth/login'); return; }
-  }, [isAuthenticated, user, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user, _hasHydrated]);
 
   useEffect(() => {
     if (!isOnline || !location) return;
@@ -96,7 +98,9 @@ export default function DriverDashboard() {
               <span className="ml-2 text-xs bg-blue-100 text-blue-600 font-medium px-2 py-0.5 rounded-full">Driver</span>
             </div>
           </div>
-          <button onClick={async () => { await logout(); router.push('/auth/login'); }}
+          <button
+            data-cy="logout"
+            onClick={async () => { await logout(); router.push('/auth/login'); }}
             className="text-gray-400 hover:text-red-500 transition-colors">
             <LogOut className="w-5 h-5" />
           </button>

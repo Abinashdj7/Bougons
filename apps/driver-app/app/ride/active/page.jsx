@@ -38,7 +38,7 @@ const STATUS_CONFIG = {
 
 export default function ActiveRidePage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const { activeRide, status, markArriving, startRide, completeRide, cancelRide } = useDriverStore();
   const { emit, on, off } = useSocket();
   const { location } = useGeolocation(true);
@@ -51,9 +51,11 @@ export default function ActiveRidePage() {
   const myMarker    = useRef(null);
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!isAuthenticated) { router.replace('/auth/login'); return; }
     if (!activeRide)      { router.replace('/dashboard'); return; }
-  }, [isAuthenticated, activeRide, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, activeRide, _hasHydrated]);
 
 
   useEffect(() => {

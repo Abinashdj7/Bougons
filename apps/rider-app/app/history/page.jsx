@@ -17,17 +17,19 @@ const statusLabels = {
 
 export default function RideHistoryPage() {
     const router = useRouter();
-    const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated, _hasHydrated } = useAuthStore();
     const [rides, setRides] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
+        if (!_hasHydrated) return;
         if (!isAuthenticated) {
             router.replace('/auth/login');
             return;
         }
-    }, [isAuthenticated, router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, _hasHydrated]);
 
     useEffect(() => {
         if (!isAuthenticated) return;

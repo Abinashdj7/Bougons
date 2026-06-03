@@ -27,7 +27,7 @@ const geocodeAddress = async (address) => {
 
 export default function RequestRidePage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const { getEstimate, requestRide, fareEstimate, status } = useRideStore();
   const { location } = useGeolocation();
   const { emit } = useSocket();
@@ -41,8 +41,10 @@ export default function RequestRidePage() {
   const [step, setStep] = useState('form');
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!isAuthenticated) router.replace('/auth/login');
-  }, [isAuthenticated, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, _hasHydrated]);
 
 
   useEffect(() => {

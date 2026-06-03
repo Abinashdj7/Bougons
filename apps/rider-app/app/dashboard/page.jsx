@@ -11,13 +11,15 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout, _hasHydrated } = useAuthStore();
   const { status, currentRide, setDriverFound, setDriverArriving, setRideStarted, setRideCompleted } = useRideStore();
   const { on, off } = useSocket();
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!isAuthenticated) router.replace('/auth/login');
-  }, [isAuthenticated, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, _hasHydrated]);
 
   useEffect(() => {
     const onDriverFound = (data) => {
@@ -37,13 +39,15 @@ export default function DashboardPage() {
       off('ride:driver_found',  onDriverFound);
       off('ride:cancelled',     onCancelled);
     };
-  }, [on, off, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on, off]);
 
   useEffect(() => {
     if (['accepted', 'driver_arriving', 'in_progress'].includes(status)) {
       router.push('/ride/tracking');
     }
-  }, [status, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   if (!user) return null;
 
@@ -67,6 +71,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <NotificationBell />
             <button
+              data-cy="logout"
               onClick={handleLogout}
               className="flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors text-sm font-medium"
             >

@@ -87,10 +87,40 @@ const getOnlineDrivers = async (req, res, next) => {
   }
 };
 
+// ── Internal handlers (called by api-gateway via x-internal-secret) ──────────
+
+const setOnlineStatusById = async (req, res, next) => {
+  try {
+    const { isOnline } = req.body;
+    if (typeof isOnline !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'isOnline must be a boolean' });
+    }
+    await locationService.setDriverOnlineStatus(req.params.id, isOnline);
+    res.status(200).json({ success: true, data: { isOnline } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateLocationById = async (req, res, next) => {
+  try {
+    const { coordinates, heading, speed } = req.body;
+    if (!Array.isArray(coordinates) || coordinates.length !== 2) {
+      return res.status(400).json({ success: false, message: 'coordinates must be [lng, lat]' });
+    }
+    const data = await locationService.updateDriverLocation(req.params.id, { coordinates, heading, speed });
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   updateLocation,
   getNearbyDrivers,
   getDriverLocation,
   setOnlineStatus,
   getOnlineDrivers,
+  setOnlineStatusById,
+  updateLocationById,
 };

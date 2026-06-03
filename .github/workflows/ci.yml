@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend-tests:
-    name: Test ${{ matrix.service }}
+    name: Unit — ${{ matrix.service }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -32,7 +32,7 @@ jobs:
         working-directory: services/${{ matrix.service }}
         run: npm install
 
-      - name: Run tests
+      - name: Run unit tests
         working-directory: services/${{ matrix.service }}
         run: npm test
         env:
@@ -50,6 +50,43 @@ jobs:
           name: coverage-${{ matrix.service }}
           path: services/${{ matrix.service }}/coverage
           retention-days: 7
+
+  integration-tests:
+    name: Integration — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - user-service
+          - ride-service
+          - location-service
+          - notification-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/${{ matrix.service }}/package.json
+
+      - name: Install dependencies
+        working-directory: services/${{ matrix.service }}
+        run: npm install
+
+      - name: Run integration tests
+        working-directory: services/${{ matrix.service }}
+        run: npm run test:integration
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-test-secret
+          JWT_REFRESH_SECRET: ci-test-refresh-secret
+          JWT_EXPIRES_IN: 15m
+          JWT_REFRESH_EXPIRES_IN: 7d
+          INTERNAL_SECRET: ci-internal-secret
+          STRIPE_SECRET_KEY: sk_test_ci_fake_key
 
   frontend-checks:
     name: Build ${{ matrix.app }}
@@ -90,3 +127,75 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:4000
           NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
           NEXT_PUBLIC_MAPBOX_TOKEN: pk.test_ci_token
+
+  e2e:
+    name: E2E — ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    needs: frontend-checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: rider-app
+            port: 3000
+            spec: cypress/e2e/rider/**
+          - app: driver-app
+            port: 3001
+            spec: cypress/e2e/driver/**
+          - app: admin-app
+            port: 3002
+            spec: cypress/e2e/admin/**
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/${{ matrix.app }}/package.json
+
+      - name: Install app dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: npm install
+
+      - name: Build app
+        working-directory: apps/${{ matrix.app }}
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
+          NEXT_PUBLIC_MAPBOX_TOKEN: pk.test_ci_token
+
+      - name: Start app
+        working-directory: apps/${{ matrix.app }}
+        run: npm start &
+        env:
+          PORT: ${{ matrix.port }}
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
+          NEXT_PUBLIC_MAPBOX_TOKEN: pk.test_ci_token
+
+      - name: Install Cypress dependencies
+        working-directory: e2e
+        run: npm install
+
+      - name: Wait for app to be ready
+        run: npx wait-on http://localhost:${{ matrix.port }} --timeout 60000
+        working-directory: e2e
+
+      - name: Run Cypress E2E tests
+        working-directory: e2e
+        run: npx cypress run --spec '${{ matrix.spec }}'
+        env:
+          CYPRESS_riderUrl: http://localhost:3000
+          CYPRESS_driverUrl: http://localhost:3001
+          CYPRESS_adminUrl: http://localhost:3002
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots-${{ matrix.app }}
+          path: e2e/cypress/screenshots
+          retention-days: 7

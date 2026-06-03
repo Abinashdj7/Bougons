@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "jest --coverage",
+    "test": "jest --coverage --testPathIgnorePatterns=__tests__/integration",
+    "test:integration": "jest --testPathPattern=__tests__/integration --forceExit",
     "test:watch": "jest --watch"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
+    "mongodb-memory-server": "^9.4.1",
     "supertest": "^6.3.3",
     "nodemon": "^3.0.2"
   }

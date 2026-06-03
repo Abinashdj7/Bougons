@@ -20,7 +20,7 @@ const STATUS_STEPS = {
 
 export default function TrackingPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, _hasHydrated } = useAuthStore();
   const { currentRide, status, driverLocation, setDriverLocation, setDriverArriving, setRideStarted, setRideCompleted, cancelRide, rateRide } = useRideStore();
   const { on, off, emit } = useSocket();
 
@@ -34,9 +34,11 @@ export default function TrackingPage() {
   const driverMarker = useRef(null);
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!isAuthenticated) { router.replace('/auth/login'); return; }
     if (!currentRide)     { router.replace('/dashboard'); return; }
-  }, [isAuthenticated, currentRide, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, currentRide, _hasHydrated]);
 
 
   useEffect(() => {

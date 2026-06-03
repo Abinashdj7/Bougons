@@ -1,0 +1,21 @@
+{
+  "name": "bougons-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:rider": "cypress run --spec 'cypress/e2e/rider/**'",
+    "cy:run:driver": "cypress run --spec 'cypress/e2e/driver/**'",
+    "cy:run:admin": "cypress run --spec 'cypress/e2e/admin/**'",
+    "cy:report": "cypress run && start cypress\\reports\\index.html",
+    "cy:report:rider": "cypress run --spec 'cypress/e2e/rider/**' && start cypress\\reports\\index.html",
+    "cy:report:driver": "cypress run --spec 'cypress/e2e/driver/**' && start cypress\\reports\\index.html",
+    "cy:report:admin": "cypress run --spec 'cypress/e2e/admin/**' && start cypress\\reports\\index.html"
+  },
+  "devDependencies": {
+    "cypress": "^13.17.0",
+    "cypress-mochawesome-reporter": "^3.8.4",
+    "wait-on": "^7.2.0"
+  }
+}

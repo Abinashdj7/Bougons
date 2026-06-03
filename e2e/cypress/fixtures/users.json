@@ -1,0 +1,23 @@
+{
+  "rider": {
+    "name": "Test Rider",
+    "email": "rider@test.com",
+    "password": "Password1!",
+    "role": "rider",
+    "_id": "rider-id-123"
+  },
+  "driver": {
+    "name": "Test Driver",
+    "email": "driver@test.com",
+    "password": "Password1!",
+    "role": "driver",
+    "_id": "driver-id-456"
+  },
+  "admin": {
+    "name": "Test Admin",
+    "email": "admin@test.com",
+    "password": "Password1!",
+    "role": "admin",
+    "_id": "admin-id-789"
+  }
+}

@@ -10,6 +10,9 @@ export const useAuthStore = create(
       accessToken: null,
       isAuthenticated: false,
       isLoading: false,
+      _hasHydrated: false,
+
+      setHasHydrated: () => set({ _hasHydrated: true }),
 
       register: async (formData) => {
         set({ isLoading: true });
@@ -68,6 +71,9 @@ export const useAuthStore = create(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated();
+      },
     }
   )
 );

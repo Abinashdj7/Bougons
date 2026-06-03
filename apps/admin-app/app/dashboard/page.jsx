@@ -26,7 +26,7 @@ const STATUS_COLOR = {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout, _hasHydrated } = useAuthStore();
 
   const [stats,    setStats]    = useState(null);
   const [rides,    setRides]    = useState([]);
@@ -36,9 +36,11 @@ export default function AdminDashboard() {
   const [tab,      setTab]      = useState('overview');
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!isAuthenticated) { router.replace('/login'); return; }
     if (user?.role !== 'admin') { router.replace('/login'); return; }
-  }, [isAuthenticated, user, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user, _hasHydrated]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
