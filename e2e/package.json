@@ -5,13 +5,13 @@
   "scripts": {
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "cy:run:rider": "cypress run --spec 'cypress/e2e/rider/**'",
-    "cy:run:driver": "cypress run --spec 'cypress/e2e/driver/**'",
-    "cy:run:admin": "cypress run --spec 'cypress/e2e/admin/**'",
+    "cy:run:rider":  "wait-on http://localhost:3000 && cypress run --spec 'cypress/e2e/rider/**'",
+    "cy:run:driver": "wait-on http://localhost:3001 && cypress run --spec 'cypress/e2e/driver/**'",
+    "cy:run:admin":  "wait-on http://localhost:3002 && cypress run --spec 'cypress/e2e/admin/**'",
     "cy:report": "cypress run && start cypress\\reports\\index.html",
-    "cy:report:rider": "cypress run --spec 'cypress/e2e/rider/**' && start cypress\\reports\\index.html",
-    "cy:report:driver": "cypress run --spec 'cypress/e2e/driver/**' && start cypress\\reports\\index.html",
-    "cy:report:admin": "cypress run --spec 'cypress/e2e/admin/**' && start cypress\\reports\\index.html"
+    "cy:report:rider":  "wait-on http://localhost:3000 && cypress run --spec 'cypress/e2e/rider/**' && start cypress\\reports\\index.html",
+    "cy:report:driver": "wait-on http://localhost:3001 && cypress run --spec 'cypress/e2e/driver/**' && start cypress\\reports\\index.html",
+    "cy:report:admin":  "wait-on http://localhost:3002 && cypress run --spec 'cypress/e2e/admin/**' && start cypress\\reports\\index.html"
   },
   "devDependencies": {
     "cypress": "^13.17.0",
