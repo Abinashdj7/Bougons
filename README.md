@@ -295,13 +295,98 @@ Rider App (3000)    Driver App (3001)    Admin App (3002)
 
 ## CI/CD
 
-GitHub Actions runs on every push to `main` and every pull request.
+Defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Triggers on every push to `main` and every pull request targeting `main`.
 
-| Job                  | What it does                                            |
-|----------------------|---------------------------------------------------------|
-| `Unit — <service>`   | `npm test` with coverage for ride, user, location, payment services |
-| `Integration — <service>` | `npm run test:integration` for all 4 services including notification-service |
-| `Build — <app>`      | `npm run lint` + `npm run build` for rider, driver, admin apps |
-| `E2E — <app>`        | Cypress headless against the built Next.js app         |
+### Pipeline overview
 
-Coverage artifacts and Cypress screenshots on failure are uploaded to GitHub Actions.
+```
+push / pull_request → main
+         │
+         ├─ backend-tests (matrix)          ← unit tests
+         │   ride-service, user-service,
+         │   location-service, payment-service
+         │
+         ├─ integration-tests (matrix)      ← integration tests
+         │   user-service, ride-service,
+         │   location-service, notification-service
+         │
+         ├─ frontend-checks (matrix)        ← lint + build
+         │   rider-app, driver-app, admin-app
+         │
+         └─ e2e (matrix, needs: frontend-checks)
+             rider-app (port 3000)
+             driver-app (port 3001)
+             admin-app  (port 3002)
+```
+
+### Job details
+
+#### `backend-tests` — Unit tests
+Runs in parallel for `ride-service`, `user-service`, `location-service`, `payment-service`.
+
+```yaml
+- npm install
+- npm test          # jest --coverage, models/Redis/HTTP all mocked
+```
+
+Environment variables injected: `JWT_SECRET`, `JWT_REFRESH_SECRET`, `JWT_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `STRIPE_SECRET_KEY`.  
+Coverage reports uploaded as artifacts (`coverage-<service>`, retained 7 days).
+
+#### `integration-tests` — Integration tests
+Runs in parallel for `user-service`, `ride-service`, `location-service`, `notification-service`.
+
+```yaml
+- npm install       # includes mongodb-memory-server
+- npm run test:integration   # jest --testPathPattern=__tests__/integration --forceExit
+```
+
+No live database or Redis required — `mongodb-memory-server` provides a real in-memory MongoDB binary; Redis is replaced with an in-memory `Map`. Environment variables injected: same as unit tests plus `INTERNAL_SECRET`.
+
+#### `frontend-checks` — Lint and build
+Runs in parallel for `rider-app`, `driver-app`, `admin-app`.
+
+```yaml
+- npm install
+- npm run lint      # Next.js ESLint
+- npm run build     # next build (static analysis + type errors)
+```
+
+Environment variables injected: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SOCKET_URL`, `NEXT_PUBLIC_MAPBOX_TOKEN`.
+
+#### `e2e` — Cypress end-to-end
+Depends on `frontend-checks`. Runs in parallel for all three apps.
+
+```yaml
+- npm run build     # production build
+- npm start &       # serve on the app's port
+- npx wait-on http://localhost:<port>
+- npx cypress run --spec 'cypress/e2e/<app>/**'
+```
+
+| App        | Port | Spec glob                  |
+|------------|------|----------------------------|
+| rider-app  | 3000 | `cypress/e2e/rider/**`     |
+| driver-app | 3001 | `cypress/e2e/driver/**`    |
+| admin-app  | 3002 | `cypress/e2e/admin/**`     |
+
+Cypress screenshots on failure are uploaded as artifacts (`cypress-screenshots-<app>`, retained 7 days).
+
+### Artifacts
+
+| Artifact                        | Produced by          | Retention |
+|---------------------------------|----------------------|-----------|
+| `coverage-<service>`            | `backend-tests`      | 7 days    |
+| `cypress-screenshots-<app>`     | `e2e` (on failure)   | 7 days    |
+
+### Running the full pipeline locally
+
+```bash
+# Unit tests
+cd services/user-service && npm test
+
+# Integration tests
+cd services/user-service && npm run test:integration
+
+# E2E (rider app must be running on port 3000)
+cd e2e && npx cypress run --spec "cypress/e2e/rider/**"
+```
