@@ -31,6 +31,7 @@ const express  = require('express');
 const jwt      = require('jsonwebtoken');
 
 const notificationRoutes = require('../../src/routes/notification.routes');
+const internalRoutes     = require('../../src/routes/internal.routes');
 const errorMiddleware    = require('../../src/middlewares/error.middleware');
 const Notification        = require('../../src/models/notification.model');
 const Preference          = require('../../src/models/preference.model');
@@ -53,7 +54,7 @@ const buildApp = () => {
   app.use(express.json());
   // Mirrors app.js route mounting
   app.use('/api/notifications', notificationRoutes);
-  app.use('/internal',          notificationRoutes);
+  app.use('/internal',         internalRoutes);
   app.use(errorMiddleware);
   return app;
 };
