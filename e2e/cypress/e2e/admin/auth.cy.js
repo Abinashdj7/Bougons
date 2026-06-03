@@ -55,7 +55,7 @@ describe('Admin — Authentication', () => {
         cy.get('input[name="password"]').type(rider.password);
         cy.get('button[type="submit"]').click();
         cy.wait('@loginRider');
-        cy.contains('Admin access only').should('be.visible');
+        cy.contains('Admin access required').should('be.visible');
         cy.url().should('not.include', '/dashboard');
       });
     });
