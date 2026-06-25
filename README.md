@@ -293,6 +293,120 @@ Rider App (3000)    Driver App (3001)    Admin App (3002)
 
 ---
 
+## Database Replication & Failover
+
+The platform supports a **3-node MongoDB replica set** for high availability and zero-data-loss failover, defined in [`docker-compose.replset.yml`](docker-compose.replset.yml).
+
+### Architecture
+
+```
+┌──────────────────────────────────────────────────────┐
+│              Replica Set  "rs0"                      │
+│                                                      │
+│   mongo1 :27017  ←─── PRIMARY  (priority 2)         │
+│      │   writeConcern: majority                      │
+│      ├──► mongo2 :27018  ── SECONDARY  (priority 1) │
+│      └──► mongo3 :27019  ── SECONDARY  (priority 1) │
+│                                                      │
+│  All writes confirmed on ≥ 2 nodes before ACK        │
+│  Automatic election on primary failure (~500 ms)     │
+└──────────────────────────────────────────────────────┘
+```
+
+### Quick start
+
+**1. Add hostname aliases** (needed so replica-set member names resolve from both inside and outside Docker):
+
+```bash
+# Mac / Linux — append to /etc/hosts
+echo "127.0.0.1  mongo1 mongo2 mongo3" | sudo tee -a /etc/hosts
+
+# Windows — append to C:\Windows\System32\drivers\etc\hosts (run as Administrator)
+Add-Content C:\Windows\System32\drivers\etc\hosts "127.0.0.1  mongo1 mongo2 mongo3"
+```
+
+**2. Start the replica set:**
+
+```bash
+docker compose -f docker-compose.replset.yml up -d
+```
+
+Docker Compose starts all three `mongod` nodes and a one-shot `mongo-init` container that calls `rs.initiate()`. The init container exits once the replica set is formed.
+
+**3. Verify:**
+
+```bash
+docker exec mongo1 mongosh --eval "rs.status().members.map(m => m.name + ' ' + m.stateStr)"
+```
+
+### Connection string
+
+```
+mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+```
+
+Services connecting to the replica set should use this URI. The driver automatically routes writes to the primary and reads to any available node.
+
+### Failover test
+
+The [`scripts/test-replica-failover.js`](scripts/test-replica-failover.js) script simulates a hard primary failure and verifies zero data loss:
+
+```bash
+cd scripts
+npm install
+node test-replica-failover.js
+```
+
+**What the test does:**
+
+| Step | Action |
+|------|--------|
+| 1 | Queries `rs.status()` — confirms PRIMARY + 2 SECONDARIEs |
+| 2 | Inserts 100 documents with `writeConcern: { w: 'majority' }` |
+| 3 | Reads and verifies all 100 documents are present |
+| 4 | Runs `docker stop mongo1` (kills the primary) |
+| 5 | Polls every 500 ms until a new primary is elected |
+| 6 | Reads all documents from the new primary |
+| 7 | Reports data loss count and election time |
+| 8 | Restarts `mongo1` so it rejoins as a secondary |
+
+**Expected output:**
+
+```
+========================================================================
+  MongoDB Replica Set Failover Test
+========================================================================
+
+[1/5] Replica set status
+  PRIMARY      mongo1 (localhost:27017)
+  SECONDARY    mongo2 (localhost:27018)
+  SECONDARY    mongo3 (localhost:27019)
+
+[2/5] Writing 100 documents (writeConcern: majority)
+  Inserted  : 100 documents
+  Write time: ~150 ms
+  w:majority — data confirmed on ≥2 nodes before ack
+
+[3/5] Pre-failover read check
+  Documents readable before failover: 100
+
+[4/5] Stopping primary: mongo1 (localhost:27017)
+
+[5/5] Waiting for election...
+  New primary: mongo2 (localhost:27018)
+  Election time: ~500 ms
+
+  RESULT: PASS — zero data loss, failover successful
+```
+
+### Tear down
+
+```bash
+docker compose -f docker-compose.replset.yml down -v
+```
+
+---
+
 ## CI/CD
 
 Defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Triggers on every push to `main` and every pull request targeting `main`.

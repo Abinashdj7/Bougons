@@ -1,0 +1,12 @@
+{
+  "name": "bougons-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Utility and test scripts for the Bougons platform",
+  "scripts": {
+    "failover-test": "node test-replica-failover.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  }
+}

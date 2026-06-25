@@ -1,0 +1,110 @@
+# MongoDB 3-node Replica Set — standalone compose file
+#
+# Usage:
+#   docker compose -f docker-compose.replset.yml up -d
+#
+# Add to /etc/hosts (Mac/Linux) or C:\Windows\System32\drivers\etc\hosts (Windows):
+#   127.0.0.1  mongo1 mongo2 mongo3
+#
+# Then run the failover test:
+#   cd scripts && npm install && node test-replica-failover.js
+
+version: '3.9'
+
+services:
+
+  mongo1:
+    image: mongo:7
+    container_name: mongo1
+    hostname: mongo1
+    ports:
+      - "27017:27017"
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    volumes:
+      - mongo1_data:/data/db
+    networks:
+      - replset-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27017", "--eval", "db.adminCommand('ping').ok", "--quiet"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  mongo2:
+    image: mongo:7
+    container_name: mongo2
+    hostname: mongo2
+    ports:
+      - "27018:27017"
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    volumes:
+      - mongo2_data:/data/db
+    networks:
+      - replset-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27017", "--eval", "db.adminCommand('ping').ok", "--quiet"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  mongo3:
+    image: mongo:7
+    container_name: mongo3
+    hostname: mongo3
+    ports:
+      - "27019:27017"
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    volumes:
+      - mongo3_data:/data/db
+    networks:
+      - replset-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27017", "--eval", "db.adminCommand('ping').ok", "--quiet"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  # One-shot container: waits for all 3 nodes to be healthy, then
+  # initiates the replica set with mongo1 as the preferred primary.
+  mongo-init:
+    image: mongo:7
+    container_name: mongo-init
+    depends_on:
+      mongo1: { condition: service_healthy }
+      mongo2: { condition: service_healthy }
+      mongo3: { condition: service_healthy }
+    networks:
+      - replset-network
+    restart: "no"
+    command: >
+      mongosh --host mongo1 --port 27017 --eval "
+        const status = rs.status();
+        if (status.ok === 1) {
+          print('Replica set already initialised');
+        } else {
+          const result = rs.initiate({
+            _id: 'rs0',
+            members: [
+              { _id: 0, host: 'mongo1:27017', priority: 2 },
+              { _id: 1, host: 'mongo2:27017', priority: 1 },
+              { _id: 2, host: 'mongo3:27017', priority: 1 }
+            ]
+          });
+          printjson(result);
+        }
+      "
+
+volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+
+networks:
+  replset-network:
+    driver: bridge
