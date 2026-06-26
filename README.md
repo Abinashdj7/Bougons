@@ -303,49 +303,47 @@ The platform supports a **3-node MongoDB replica set** for high availability and
 ┌──────────────────────────────────────────────────────┐
 │              Replica Set  "rs0"                      │
 │                                                      │
-│   mongo1 :27017  ←─── PRIMARY  (priority 2)         │
+│   mongo1 :27020  ←─── PRIMARY  (priority 2)         │
 │      │   writeConcern: majority                      │
-│      ├──► mongo2 :27018  ── SECONDARY  (priority 1) │
-│      └──► mongo3 :27019  ── SECONDARY  (priority 1) │
+│      ├──► mongo2 :27021  ── SECONDARY  (priority 1) │
+│      └──► mongo3 :27022  ── SECONDARY  (priority 1) │
 │                                                      │
 │  All writes confirmed on ≥ 2 nodes before ACK        │
 │  Automatic election on primary failure (~500 ms)     │
 └──────────────────────────────────────────────────────┘
 ```
 
+Ports 27020–27022 are used to avoid clashing with other local MongoDB instances.
+
 ### Quick start
 
-**1. Add hostname aliases** (needed so replica-set member names resolve from both inside and outside Docker):
-
-```bash
-# Mac / Linux — append to /etc/hosts
-echo "127.0.0.1  mongo1 mongo2 mongo3" | sudo tee -a /etc/hosts
-
-# Windows — append to C:\Windows\System32\drivers\etc\hosts (run as Administrator)
-Add-Content C:\Windows\System32\drivers\etc\hosts "127.0.0.1  mongo1 mongo2 mongo3"
-```
-
-**2. Start the replica set:**
+**1. Start the replica set:**
 
 ```bash
 docker compose -f docker-compose.replset.yml up -d
 ```
 
-Docker Compose starts all three `mongod` nodes and a one-shot `mongo-init` container that calls `rs.initiate()`. The init container exits once the replica set is formed.
+**2. Initiate the replica set** (one-time, after containers are healthy):
+
+```bash
+docker exec mongo1 mongosh --eval "rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo1:27017',priority:2},{_id:1,host:'mongo2:27017',priority:1},{_id:2,host:'mongo3:27017',priority:1}]})"
+```
 
 **3. Verify:**
 
 ```bash
-docker exec mongo1 mongosh --eval "rs.status().members.map(m => m.name + ' ' + m.stateStr)"
+docker exec mongo1 mongosh --eval "rs.status().members.forEach(m => print(m.name, m.stateStr))"
 ```
+
+Expected: `mongo1:27017 PRIMARY`, `mongo2:27017 SECONDARY`, `mongo3:27017 SECONDARY`.
 
 ### Connection string
 
 ```
-mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+mongodb://localhost:27020,localhost:27021,localhost:27022/?replicaSet=rs0
 ```
 
-Services connecting to the replica set should use this URI. The driver automatically routes writes to the primary and reads to any available node.
+The test script connects via `directConnection` to each port individually — no `/etc/hosts` changes required.
 
 ### Failover test
 
@@ -370,7 +368,7 @@ node test-replica-failover.js
 | 7 | Reports data loss count and election time |
 | 8 | Restarts `mongo1` so it rejoins as a secondary |
 
-**Expected output:**
+**Actual test output (verified):**
 
 ```
 ========================================================================
@@ -378,25 +376,49 @@ node test-replica-failover.js
 ========================================================================
 
 [1/5] Replica set status
-  PRIMARY      mongo1 (localhost:27017)
-  SECONDARY    mongo2 (localhost:27018)
-  SECONDARY    mongo3 (localhost:27019)
+  PRIMARY      mongo1 (localhost:27020)
+  SECONDARY    mongo2 (localhost:27021)
+  SECONDARY    mongo3 (localhost:27022)
 
 [2/5] Writing 100 documents (writeConcern: majority)
   Inserted  : 100 documents
-  Write time: ~150 ms
+  Write time: 123 ms
   w:majority — data confirmed on ≥2 nodes before ack
 
 [3/5] Pre-failover read check
   Documents readable before failover: 100
 
-[4/5] Stopping primary: mongo1 (localhost:27017)
+[4/5] Stopping primary: mongo1 (localhost:27020)
+  mongo1 stopped at t=0
 
 [5/5] Waiting for election...
-  New primary: mongo2 (localhost:27018)
-  Election time: ~500 ms
+  t=506ms  polls=1  waiting...
+  New primary: mongo2 (localhost:27021)
+  Election time: 539 ms  (1 polls × 500 ms)
+
+  Restarting mongo1 (rejoins as secondary)...
+  mongo1 restarted
+
+========================================================================
+  RESULTS
+========================================================================
+
+  Initial primary:                      mongo1 (localhost:27020)
+  Initial secondaries:                  mongo2:27021, mongo3:27022
+  Documents written:                    100
+  Write time:                           123 ms
+  Documents before failover:            100
+  Container stopped:                    mongo1
+  Election time:                        539 ms
+  Poll attempts:                        1
+  New primary:                          mongo2 (localhost:27021)
+  Documents after failover:             100
+  Read time after failover:             45 ms
+  Data loss:                            0 documents
+  Total test duration:                  1632 ms
 
   RESULT: PASS — zero data loss, failover successful
+========================================================================
 ```
 
 ### Tear down

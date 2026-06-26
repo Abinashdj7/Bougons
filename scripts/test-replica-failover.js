@@ -16,9 +16,9 @@ const { spawnSync }   = require('child_process');
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const NODES = [
-  { label: 'mongo1', container: 'mongo1', port: 27017 },
-  { label: 'mongo2', container: 'mongo2', port: 27018 },
-  { label: 'mongo3', container: 'mongo3', port: 27019 },
+  { label: 'mongo1', container: 'mongo1', port: 27020 },
+  { label: 'mongo2', container: 'mongo2', port: 27021 },
+  { label: 'mongo3', container: 'mongo3', port: 27022 },
 ];
 
 const DB_NAME    = 'failover_test';
